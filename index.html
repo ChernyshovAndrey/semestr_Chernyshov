@@ -4,64 +4,71 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TextMorph Studio</title>
+<!-- Google Fonts — available ones from the requested list -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Didact+Gothic&family=Lobster&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-/* ── Custom fonts from fonts-online.ru CDN (loaded via @font-face via data URI workaround — we use Google Fonts for system fallback + declare font names) ── */
 :root{
   --bg:#0a0a0a;--s1:#111;--s2:#1a1a1a;--s3:#222;
   --br:#2a2a2a;--acc:#e8ff00;--acc2:#ff3c6e;--acc3:#00f5d4;
   --txt:#f0f0f0;--dim:#666;--dim2:#444;
   --fm:'Space Mono',monospace;
 }
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
-
 *{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
 body{background:var(--bg);color:var(--txt);font-family:var(--fm);min-height:100vh;overflow-x:hidden}
-
 .app{display:grid;grid-template-columns:300px 1fr;min-height:100vh}
 
 /* SIDEBAR */
-.sidebar{border-right:1px solid var(--br);display:flex;flex-direction:column;background:var(--s1);max-height:100vh;position:sticky;top:0}
+.sidebar{border-right:1px solid var(--br);display:flex;flex-direction:column;background:var(--s1);height:100vh;position:sticky;top:0}
 .logo{padding:16px 18px 12px;border-bottom:1px solid var(--br);flex-shrink:0}
 .logo h1{font-family:'Space Mono',monospace;font-size:22px;letter-spacing:0.12em;line-height:1;font-weight:700}
 .logo h1 span{color:var(--acc)}
 .sidebar-inner{overflow-y:auto;flex:1;display:flex;flex-direction:column}
-
-.sec{border-bottom:1px solid var(--br);padding:12px 14px}
+.sec{border-bottom:1px solid var(--br);padding:12px 14px;flex-shrink:0}
 .sec-lbl{font-family:var(--fm);font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
 
-/* Text + draw area */
-.txt-draw-wrap{position:relative;width:100%;background:var(--s2);border:1px solid var(--br);transition:border-color 0.2s}
-.txt-draw-wrap:focus-within{border-color:var(--acc)}
-#uTxt{width:100%;background:transparent;border:none;color:var(--txt);font-family:var(--fm);font-size:13px;padding:9px;outline:none;resize:none;display:block;min-height:60px;position:relative;z-index:2}
-#sketchC{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none;opacity:0.5}
+/* ── SKETCH / TEXT AREA ── */
+.input-box{position:relative;width:100%;background:var(--s2);border:1px solid var(--br);overflow:hidden;transition:border-color 0.2s;min-height:90px}
+.input-box.active-draw{border-color:var(--acc);cursor:crosshair}
+#uTxt{width:100%;background:transparent;border:none;color:var(--txt);font-family:var(--fm);font-size:13px;padding:9px;outline:none;resize:none;display:block;min-height:90px;position:relative;z-index:2;cursor:text}
+#sketchC{position:absolute;top:0;left:0;width:100%;height:100%;z-index:5;display:none;cursor:crosshair}
 
-.draw-mode-row{display:flex;align-items:center;gap:7px;margin-top:6px;flex-wrap:wrap}
-.draw-mode-row label{font-family:var(--fm);font-size:9px;color:var(--dim);letter-spacing:0.08em;text-transform:uppercase;display:flex;align-items:center;gap:4px;cursor:pointer}
-input[type=checkbox]{accent-color:var(--acc);cursor:pointer}
+.draw-row{display:flex;align-items:center;gap:7px;margin-top:6px;flex-wrap:wrap}
+.draw-row label{font-family:var(--fm);font-size:9px;color:var(--dim);letter-spacing:0.08em;text-transform:uppercase;display:flex;align-items:center;gap:4px;cursor:pointer}
+input[type=checkbox]{accent-color:var(--acc);cursor:pointer;width:14px;height:14px}
+.sk-hint{font-family:var(--fm);font-size:9px;color:var(--acc);display:none}
+.sk-btns{display:none;gap:5px}
+.sk-btns button{background:var(--s3);border:1px solid var(--br);color:var(--dim);font-family:var(--fm);font-size:9px;padding:3px 8px;cursor:pointer;transition:all 0.15s}
+.sk-btns button:hover{color:var(--acc);border-color:var(--acc)}
+.sk-btns .send-btn{color:var(--acc);border-color:var(--acc)}
+.sk-btns .send-btn:hover{background:rgba(232,255,0,0.12)}
 
-.hist-pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;min-height:16px}
+.hist-pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;min-height:14px}
 .hpill{background:var(--s3);border:1px solid var(--br);color:var(--dim);font-family:var(--fm);font-size:9px;padding:3px 8px;cursor:pointer;letter-spacing:0.05em;transition:all 0.15s;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hpill:hover{color:var(--acc);border-color:var(--acc)}
 
+/* BUTTONS */
 .big-btn{width:100%;background:var(--s2);border:1px solid var(--br);color:var(--txt);font-family:var(--fm);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;padding:10px 13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all 0.2s;text-align:left}
 .big-btn:hover{border-color:var(--acc);color:var(--acc)}
 .big-btn .arr{color:var(--acc);font-size:13px;flex-shrink:0}
 
-/* Color wheel */
+/* COLOR WHEEL */
 .cw-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
 #colorWheel{border-radius:50%;cursor:crosshair;border:2px solid var(--br);display:block}
 .cw-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:center}
 .cw-prev{width:24px;height:24px;border-radius:50%;border:2px solid var(--br);flex-shrink:0}
 .cw-hex{font-family:var(--fm);font-size:10px;color:var(--dim)}
 
-/* Sliders */
+/* SLIDERS */
 .sl-row{display:flex;justify-content:space-between;margin-bottom:3px}
 .sl-row span{font-family:var(--fm);font-size:9px;color:var(--dim);letter-spacing:0.06em;text-transform:uppercase}
 .sl-row .v{color:var(--acc)}
 input[type=range]{width:100%;-webkit-appearance:none;height:2px;background:var(--br);outline:none;margin-bottom:9px}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:var(--acc);cursor:pointer}
 
-.run-btn{width:100%;background:var(--acc);color:#000;font-family:'Space Mono',monospace;font-size:20px;font-weight:700;letter-spacing:0.1em;padding:14px;border:none;cursor:pointer;transition:all 0.2s;flex-shrink:0}
+.run-btn{width:100%;background:var(--acc);color:#000;font-family:'Space Mono',monospace;font-size:20px;font-weight:700;letter-spacing:0.1em;padding:14px;border:none;cursor:pointer;transition:all 0.2s;flex-shrink:0;margin-top:auto}
 .run-btn:hover{background:#fff;letter-spacing:0.22em}
 
 /* PREVIEW */
@@ -77,6 +84,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 #bgImg.vis{opacity:1}
 #stage{position:relative;z-index:2;text-align:center;max-width:960px;width:100%;line-height:1.1;word-break:break-word;user-select:none}
 
+/* drawn image on stage */
+#stage .sketch-img{max-width:90%;max-height:340px;object-fit:contain;display:block;margin:0 auto}
+
 .bbar{border-top:1px solid var(--br);padding:9px 16px;display:flex;gap:12px;align-items:center;background:var(--s1);flex-wrap:wrap}
 .ipill{font-family:var(--fm);font-size:9px;color:var(--dim);letter-spacing:0.05em}
 .ipill strong{color:var(--acc3);font-weight:400}
@@ -91,7 +101,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 .mcl{position:absolute;top:12px;right:12px;background:none;border:1px solid var(--br);color:var(--dim);font-family:var(--fm);font-size:10px;padding:4px 10px;cursor:pointer;transition:all 0.15s}
 .mcl:hover{color:var(--acc2);border-color:var(--acc2)}
 
-/* Anim grid */
 .agrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .ac{background:var(--s2);border:1px solid var(--br);padding:13px 7px;cursor:pointer;transition:all 0.15s;text-align:center}
 .ac:hover,.ac.on{border-color:var(--acc);background:rgba(232,255,0,0.06)}
@@ -100,14 +109,13 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 .ad{font-size:9px;color:var(--dim2);margin-top:2px;font-family:var(--fm)}
 .ac.on .an{color:var(--acc)}
 
-/* Font list */
 .fl{display:flex;flex-direction:column;gap:2px}
-.fi{padding:11px 14px;cursor:pointer;border:1px solid transparent;transition:all 0.15s;font-size:18px;color:var(--txt)}
+.fi{padding:11px 14px;cursor:pointer;border:1px solid transparent;transition:all 0.15s;font-size:18px;color:var(--txt);line-height:1.3}
 .fi:hover{border-color:var(--br);background:var(--s2)}
 .fi.on{border-color:var(--acc);background:rgba(232,255,0,0.06);color:var(--acc)}
 .flbl{font-family:var(--fm);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--dim2);padding:7px 0 3px;border-bottom:1px solid var(--br);margin-bottom:3px}
 
-/* ── KEYFRAMES ── */
+/* KEYFRAMES */
 @keyframes twblink{0%,49%{opacity:1}50%,100%{opacity:0}}
 @keyframes wavech{0%,100%{transform:translateY(0)}50%{transform:translateY(-22px)}}
 @keyframes neonp{0%,100%{text-shadow:0 0 8px currentColor,0 0 28px currentColor,0 0 70px currentColor;opacity:1}50%{text-shadow:0 0 2px currentColor,0 0 6px currentColor;opacity:0.55}}
@@ -121,6 +129,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 @keyframes td3a{0%{transform:perspective(600px) rotateX(80deg) translateZ(-100px);opacity:0}100%{transform:perspective(600px) rotateX(0deg) translateZ(0);opacity:1}}
 @keyframes lgtn{0%{opacity:0;filter:brightness(15) blur(10px);transform:scale(1.6)}20%{opacity:1;filter:brightness(4) blur(0);transform:scale(1.05)}35%{opacity:0.2;filter:brightness(12) blur(5px)}55%{opacity:1;filter:brightness(1.5) blur(0);transform:scale(1)}100%{opacity:1;filter:brightness(1)}}
 @keyframes matfall{0%{opacity:0;transform:translateY(-40px);filter:brightness(4)}30%{opacity:1;filter:brightness(2)}100%{opacity:1;transform:translateY(0);filter:brightness(1)}}
+/* sketch image animations */
+@keyframes sk-fadein{0%{opacity:0;transform:scale(0.92)}100%{opacity:1;transform:scale(1)}}
+@keyframes sk-glow{0%,100%{filter:drop-shadow(0 0 8px var(--glow-col)) brightness(1)}50%{filter:drop-shadow(0 0 28px var(--glow-col)) brightness(1.3)}}
 </style>
 </head>
 <body>
@@ -149,7 +160,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 
 <!-- ══ FONT MODAL ══ -->
 <div class="mo" id="mFont">
-<div class="mbox" style="max-width:420px">
+<div class="mbox" style="max-width:440px">
   <button class="mcl" onclick="mClose('mFont')">✕</button>
   <h2>Vyber <span>Font</span></h2>
   <div class="fl" id="fontList"></div>
@@ -164,21 +175,23 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
   <div class="logo"><h1>Text<span>Morph</span></h1></div>
   <div class="sidebar-inner">
 
-    <!-- TEXT + DRAW -->
+    <!-- TEXT + SKETCH -->
     <div class="sec">
       <div class="sec-lbl">Tvoj text</div>
-      <div class="txt-draw-wrap" id="tdWrap">
-        <canvas id="sketchC"></canvas>
+      <div class="input-box" id="inputBox">
         <textarea id="uTxt" rows="3" placeholder="Napíš alebo nakresli..." oninput="onTxtIn()" onkeydown="onTxtKey(event)"></textarea>
+        <canvas id="sketchC"></canvas>
       </div>
-      <div class="draw-mode-row">
+      <div class="draw-row">
         <label>
           <input type="checkbox" id="drawToggle" onchange="toggleSketch(this.checked)">
           ✏️ Kresliť myšou
         </label>
-        <span id="sketchInfo" style="font-size:9px;color:var(--dim);display:none">PKM = kresliť</span>
-        <button class="tbtn" id="clearSkBtn" style="display:none;font-size:9px;padding:3px 7px" onclick="clearSketch()">✕ Vymazať</button>
-        <button class="tbtn" id="sendSkBtn" style="display:none;font-size:9px;padding:3px 7px;color:var(--acc);border-color:var(--acc)" onclick="sendSketchToStage()">→ Na scénu</button>
+        <span class="sk-hint" id="skHint">Drž LKM → kresli</span>
+      </div>
+      <div class="sk-btns" id="skBtns">
+        <button onclick="clearSketch()">✕ Vymazať</button>
+        <button class="send-btn" onclick="sendSketchToStage()">→ Zobraziť na scéne</button>
       </div>
       <div class="hist-pills" id="hist"></div>
     </div>
@@ -194,21 +207,17 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
     <!-- SETTINGS -->
     <div class="sec">
       <div class="sec-lbl">Nastavenia</div>
-
       <div class="sl-row"><span>Veľkosť</span><span class="v" id="szV">80px</span></div>
       <input type="range" min="16" max="180" value="80" id="fSz" oninput="szV.textContent=this.value+'px';applyS()">
-
       <div class="sl-row"><span>Rýchlosť</span><span class="v" id="spV">0%</span></div>
-      <input type="range" min="0" max="100" value="0" id="spd" oninput="onSpdChange(this.value)">
-
+      <input type="range" min="0" max="100" value="0" id="spd" oninput="spV.textContent=this.value+'%';document.getElementById('iSpd').textContent=this.value+'%'">
       <div class="sl-row"><span>Hrúbka</span><span class="v" id="thV">2px</span></div>
       <input type="range" min="1" max="30" value="2" id="thickness" oninput="thV.textContent=this.value+'px';applyS()">
-
       <div class="sl-row"><span>Medzery</span><span class="v" id="lsV">0.05em</span></div>
       <input type="range" min="-5" max="30" value="5" id="lSp" oninput="lsV.textContent=(this.value/100).toFixed(2)+'em';applyS()">
     </div>
 
-    <!-- COLOR WHEEL -->
+    <!-- COLOR -->
     <div class="sec">
       <div class="sec-lbl">Farba textu</div>
       <div class="cw-wrap">
@@ -226,12 +235,13 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
     <div class="sec">
       <div class="sec-lbl">Font</div>
       <button class="big-btn" onclick="mOpen('mFont')">
-        <span id="fontLbl" style="font-size:14px">Heinz Sans</span><span class="arr">▼</span>
+        <span id="fontLbl" style="font-size:14px;font-family:'Didact Gothic',sans-serif">Didact Gothic</span>
+        <span class="arr">▼</span>
       </button>
     </div>
 
     <!-- RUN -->
-    <div style="padding:14px;margin-top:auto">
+    <div style="padding:14px">
       <button class="run-btn" onclick="runAnim()">▶ SPUSTIŤ</button>
     </div>
   </div>
@@ -245,16 +255,14 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
     <button class="tbtn" onclick="expPNG()">⬇ PNG</button>
     <button class="tbtn" id="gifBtn" onclick="expGIF()">⬇ GIF</button>
   </div>
-
   <div class="cwrap" id="cWrap">
     <img id="bgImg" alt="">
     <div id="stage"></div>
   </div>
-
   <div class="bbar">
     <div class="ipill">Animácia: <strong id="iAnim">matrix</strong></div>
     <div class="ipill">Znaky: <strong id="iCh">0</strong></div>
-    <div class="ipill">Font: <strong id="iFnt">Heinz Sans</strong></div>
+    <div class="ipill">Font: <strong id="iFnt">Didact Gothic</strong></div>
     <div class="ipill">Rýchlosť: <strong id="iSpd">0%</strong></div>
     <div class="bbar-right">
       <button class="tbtn" onclick="document.getElementById('bgInp').click()">🖼 Pozadie</button>
@@ -263,22 +271,22 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
     </div>
   </div>
 </div>
-</div>
+</div><!-- .app -->
 
 <script>
-/* ════════════════════════════════════
+/* ══════════════════════════════════════
    STATE
-════════════════════════════════════ */
-let curAnim='matrix', curColor='#e8ff00', curFont='Heinz Sans';
-let hist=[], sketchMode=false, sketchDrawing=false;
-let sketchCtx=null;
+══════════════════════════════════════ */
+let curAnim='matrix', curColor='#e8ff00', curFont='Didact Gothic';
+let curFontStack="'Didact Gothic',sans-serif";
+let hist=[], sketchMode=false, sketchDrawing=false, sketchCtx=null;
+let sketchDataURL=null; // last drawn image
+let stageIsSketch=false; // whether stage is showing a sketch
 const garCols=['#ff3c6e','#e8ff00','#00f5d4','#ff8c00','#a78bfa','#fff','#ff69b4','#00bfff'];
 
-// Speed: 0% = base duration 2s, 100% = 0.5s (×2 faster)
-function getSpeedDur(){
+function getSp(){
   const pct=parseInt(document.getElementById('spd').value);
-  // 0% → 2.0s, 100% → 0.5s
-  return 2.0 - (pct/100)*1.5;
+  return 2.0-(pct/100)*1.5; // 0%→2s, 100%→0.5s
 }
 
 const animLabels={
@@ -288,47 +296,44 @@ const animLabels={
   garland:'🎄 Girlanda',td3:'🎲 3D'
 };
 
-/* ════════════════════════════════════
-   CUSTOM FONTS
-   Since fonts-online.ru doesn't provide @font-face CDN links,
-   we define them with system/generic fallbacks and show names correctly.
-   Users can install fonts locally; names are declared for recognition.
-════════════════════════════════════ */
+/* ══════════════════════════════════════
+   FONTS
+   Google Fonts available: Didact Gothic, Lobster
+   Others: declared with close fallbacks; user can install locally
+══════════════════════════════════════ */
 const fontDefs=[
-  {name:'Heinz Sans',       stack:'"Heinz Sans","Arial Narrow",sans-serif'},
-  {name:'Delaghen',         stack:'"Delaghen","Palatino Linotype",serif'},
-  {name:'Make Things',      stack:'"Make Things","Comic Sans MS",cursive'},
-  {name:'Hel Grotesk Gothic SHA', stack:'"Hel Grotesk Gothic SHA","Franklin Gothic Medium",sans-serif'},
-  {name:'Komicnicks Caps',  stack:'"Komicnicks Caps","Impact",sans-serif'},
-  {name:'Hormuz',           stack:'"Hormuz","Georgia",serif'},
-  {name:'Greengoth SHA',    stack:'"Greengoth SHA","Copperplate Gothic","Papyrus",fantasy'},
-  {name:'DS Kork SHA',      stack:'"DS Kork SHA","Courier New",monospace'},
-  {name:'Graphik LC Web',   stack:'"Graphik LC Web","Trebuchet MS",sans-serif'},
-  {name:'BlacktearScriptC', stack:'"BlacktearScriptC","Brush Script MT",cursive'},
+  {name:'Didact Gothic',    stack:"'Didact Gothic','Arial',sans-serif",         gf:true},
+  {name:'Lobster',          stack:"'Lobster','Georgia',cursive",                gf:true},
+  {name:'Libra Sans',       stack:"'Libra Sans','Optima','Candara',sans-serif", gf:false},
+  {name:'Nine by Five',     stack:"'Nine by Five','Impact','Arial Narrow',sans-serif", gf:false},
+  {name:'5Mikrodotz',       stack:"'5Mikrodotz','Courier New',monospace",       gf:false},
+  {name:'FS Gravity',       stack:"'FS Gravity','Trebuchet MS',sans-serif",     gf:false},
+  {name:'Computer Says No', stack:"'Computer Says No','Courier New',monospace", gf:false},
+  {name:'Foglihten Black Pcs', stack:"'Foglihten Black Pcs','Palatino Linotype',serif", gf:false},
+  {name:'Efour Digital Pro',stack:"'Efour Digital Pro','Lucida Console',monospace", gf:false},
+  {name:'Abibas',           stack:"'Abibas','Impact',sans-serif",               gf:false},
+  {name:'Capture Smallz Clean', stack:"'Capture Smallz Clean','Georgia',serif", gf:false},
+  {name:'20db',             stack:"'20db','Arial Narrow',sans-serif",           gf:false},
+  {name:'Anaktoria',        stack:"'Anaktoria','Garamond','Georgia',serif",     gf:false},
 ];
-let curFontStack=fontDefs[0].stack;
 
-/* ════════════════════════════════════
+/* ══════════════════════════════════════
    MODALS
-════════════════════════════════════ */
+══════════════════════════════════════ */
 function mOpen(id){document.getElementById(id).classList.add('open')}
 function mClose(id){document.getElementById(id).classList.remove('open')}
 document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}));
 
-/* ════════════════════════════════════
-   SPEED
-════════════════════════════════════ */
-function onSpdChange(v){
-  spV.textContent=v+'%';
-  document.getElementById('iSpd').textContent=v+'%';
+/* ══════════════════════════════════════
+   TEXT INPUT
+══════════════════════════════════════ */
+function onTxtIn(){
+  document.getElementById('iCh').textContent=document.getElementById('uTxt').value.length;
+  stageIsSketch=false;
 }
-
-/* ════════════════════════════════════
-   HISTORY
-════════════════════════════════════ */
-function onTxtIn(){document.getElementById('iCh').textContent=document.getElementById('uTxt').value.length}
-function onTxtKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();runAnim()}}
-
+function onTxtKey(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();runAnim()}
+}
 function saveHist(t){
   if(!t.trim())return;
   hist=[t,...hist.filter(h=>h!==t)].slice(0,8);renderHist();
@@ -343,102 +348,255 @@ function renderHist(){
   });
 }
 
-/* ════════════════════════════════════
-   SKETCH IN TEXT AREA
-════════════════════════════════════ */
+/* ══════════════════════════════════════
+   SKETCH DRAWING IN INPUT BOX
+══════════════════════════════════════ */
 function toggleSketch(on){
   sketchMode=on;
+  const box=document.getElementById('inputBox');
   const ta=document.getElementById('uTxt');
   const c=document.getElementById('sketchC');
-  const info=document.getElementById('sketchInfo');
-  const clrBtn=document.getElementById('clearSkBtn');
-  const sendBtn=document.getElementById('sendSkBtn');
+  const hint=document.getElementById('skHint');
+  const btns=document.getElementById('skBtns');
 
   if(on){
-    // Resize canvas to match textarea
-    const wrap=document.getElementById('tdWrap');
-    c.width=wrap.clientWidth;
-    c.height=Math.max(80,ta.scrollHeight);
-    c.style.pointerEvents='all';
-    c.style.cursor='crosshair';
-    c.style.opacity='1';
+    // Size canvas to match the input box
+    const bRect=box.getBoundingClientRect();
+    const w=box.clientWidth;
+    const h=Math.max(90,box.clientHeight);
+    c.width=w; c.height=h;
+    c.style.display='block';
     c.style.position='absolute';
-    c.style.top='0';c.style.left='0';
-    c.style.width='100%';c.style.height='100%';
-    ta.style.opacity='0.15';
+    c.style.top='0'; c.style.left='0';
+    c.style.width='100%'; c.style.height='100%';
+    c.style.background='rgba(20,20,20,0.95)';
+    box.classList.add('active-draw');
+    ta.style.pointerEvents='none';
+
     sketchCtx=c.getContext('2d');
-    sketchCtx.strokeStyle=curColor;
-    sketchCtx.lineWidth=parseInt(document.getElementById('thickness').value);
-    sketchCtx.lineCap='round';sketchCtx.lineJoin='round';
-    info.style.display='inline';clrBtn.style.display='inline';sendBtn.style.display='inline';
-    initSketchEvents(c);
+    sketchCtx.lineCap='round';
+    sketchCtx.lineJoin='round';
+
+    hint.style.display='inline';
+    btns.style.display='flex';
+
+    // Events — LMB only (left button)
+    c._ondown=e=>{
+      if(e.button!==0)return; // only LMB
+      e.preventDefault();
+      sketchDrawing=true;
+      const p=getP(e,c);
+      sketchCtx.strokeStyle=curColor;
+      sketchCtx.lineWidth=parseInt(document.getElementById('thickness').value)||2;
+      sketchCtx.beginPath();
+      sketchCtx.moveTo(p.x,p.y);
+    };
+    c._onmove=e=>{
+      if(!sketchDrawing)return;
+      e.preventDefault();
+      const p=getP(e,c);
+      sketchCtx.strokeStyle=curColor;
+      sketchCtx.lineWidth=parseInt(document.getElementById('thickness').value)||2;
+      sketchCtx.lineTo(p.x,p.y);
+      sketchCtx.stroke();
+    };
+    c._onup=()=>{sketchDrawing=false;if(sketchCtx)sketchCtx.beginPath()};
+
+    c.addEventListener('mousedown',c._ondown);
+    c.addEventListener('mousemove',c._onmove);
+    c.addEventListener('mouseup',c._onup);
+    c.addEventListener('mouseleave',c._onup);
+    c.addEventListener('contextmenu',e=>e.preventDefault());
+
   } else {
-    c.style.pointerEvents='none';c.style.opacity='0.5';
-    ta.style.opacity='1';
-    info.style.display='none';clrBtn.style.display='none';sendBtn.style.display='none';
-    removeSketchEvents(c);
+    c.style.display='none';
+    c.style.background='';
+    box.classList.remove('active-draw');
+    ta.style.pointerEvents='';
+    hint.style.display='none';
+    btns.style.display='none';
+    if(c._ondown){
+      c.removeEventListener('mousedown',c._ondown);
+      c.removeEventListener('mousemove',c._onmove);
+      c.removeEventListener('mouseup',c._onup);
+      c.removeEventListener('mouseleave',c._onup);
+    }
+    sketchDrawing=false;
   }
 }
 
-function initSketchEvents(c){
-  function pos(e){const r=c.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
-  c._sd=e=>{
-    e.preventDefault();sketchDrawing=true;
-    sketchCtx.strokeStyle=curColor;
-    sketchCtx.lineWidth=parseInt(document.getElementById('thickness').value);
-    const p=pos(e);sketchCtx.beginPath();sketchCtx.moveTo(p.x,p.y);
-  };
-  c._mv=e=>{
-    e.preventDefault();if(!sketchDrawing)return;
-    const p=pos(e);sketchCtx.lineTo(p.x,p.y);sketchCtx.stroke();
-  };
-  c._su=()=>{sketchDrawing=false;sketchCtx.beginPath()};
-  c.addEventListener('mousedown',c._sd);
-  c.addEventListener('mousemove',c._mv);
-  c.addEventListener('mouseup',c._su);
-  c.addEventListener('mouseleave',c._su);
-  c.addEventListener('contextmenu',e=>{e.preventDefault();c._sd(e)});
-}
-function removeSketchEvents(c){
-  if(c._sd)c.removeEventListener('mousedown',c._sd);
-  if(c._mv)c.removeEventListener('mousemove',c._mv);
-  if(c._su){c.removeEventListener('mouseup',c._su);c.removeEventListener('mouseleave',c._su)}
+function getP(e,c){
+  const r=c.getBoundingClientRect();
+  return{x:e.clientX-r.left, y:e.clientY-r.top};
 }
 
 function clearSketch(){
   const c=document.getElementById('sketchC');
-  if(sketchCtx)sketchCtx.clearRect(0,0,c.width,c.height);
+  if(sketchCtx){sketchCtx.clearRect(0,0,c.width,c.height);}
+  sketchDataURL=null;
 }
 
+/* Send sketch to main stage — applies color, brightness, and animation effects */
 function sendSketchToStage(){
   const c=document.getElementById('sketchC');
-  const stage=document.getElementById('stage');
-  stage.innerHTML='';
-  const img=document.createElement('img');
-  img.src=c.toDataURL('image/png');
-  img.style.cssText='max-width:100%;max-height:300px;object-fit:contain;opacity:0;transition:opacity 0.6s';
-  stage.appendChild(img);
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{img.style.opacity='1'}));
-  // uncheck draw mode
+  if(!sketchCtx) return;
+
+  // Tint the drawn image with current color
+  const offscreen=document.createElement('canvas');
+  offscreen.width=c.width; offscreen.height=c.height;
+  const octx=offscreen.getContext('2d');
+  octx.drawImage(c,0,0);
+  // Color tint via composite
+  octx.globalCompositeOperation='source-in';
+  octx.fillStyle=curColor;
+  octx.fillRect(0,0,offscreen.width,offscreen.height);
+  octx.globalCompositeOperation='source-over';
+
+  sketchDataURL=offscreen.toDataURL('image/png');
+  stageIsSketch=true;
+
+  // Uncheck draw mode
   document.getElementById('drawToggle').checked=false;
   toggleSketch(false);
+
+  // Show on stage with current animation applied to the image
+  showSketchOnStage();
 }
 
-/* ════════════════════════════════════
+function showSketchOnStage(){
+  if(!sketchDataURL) return;
+  const stage=document.getElementById('stage');
+  const sp=getSp();
+  stage.innerHTML='';
+  stage.style.perspective='800px';
+
+  const img=document.createElement('img');
+  img.className='sketch-img';
+  img.src=sketchDataURL;
+  img.style.opacity='0';
+  // Apply animation based on current selection
+  const glow=curColor;
+  img.style.setProperty('--glow-col',glow);
+
+  const sz=parseInt(document.getElementById('fSz').value);
+  const maxH=Math.max(120, Math.min(sz*4, 380));
+  img.style.maxHeight=maxH+'px';
+
+  const bright=parseInt(document.getElementById('brightSl').value)/100;
+
+  stage.appendChild(img);
+
+  // Apply the selected animation to the sketch image
+  switch(curAnim){
+    case 'neon':
+      img.style.opacity='1';
+      img.style.filter=`brightness(${bright})`;
+      img.style.animation=`sk-glow ${sp*0.6}s ease-in-out infinite`;
+      break;
+    case 'fadeblur':
+      img.style.transition=`opacity ${sp*0.7}s ease, filter ${sp*0.7}s ease`;
+      img.style.filter=`blur(18px) brightness(${bright})`;
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        img.style.opacity='1';
+        img.style.filter=`blur(0) brightness(${bright})`;
+      }));
+      break;
+    case 'wave':
+      img.style.opacity='1';
+      img.style.filter=`brightness(${bright})`;
+      img.style.animation=`wavech ${sp*0.6}s ease-in-out infinite`;
+      break;
+    case 'bounce':
+      img.style.animation=`bounci ${sp*0.7}s cubic-bezier(0.36,0.07,0.19,0.97) both`;
+      setTimeout(()=>{img.style.filter=`brightness(${bright})`;},50);
+      break;
+    case 'mirror':
+      img.style.filter=`brightness(${bright})`;
+      img.style.animation=`mirr ${sp}s cubic-bezier(0.22,1,0.36,1) both`;
+      break;
+    case 'lightning':
+      img.style.filter=`brightness(${bright})`;
+      img.style.animation=`lgtn ${sp}s ease both`;
+      break;
+    case 'td3':
+      img.style.filter=`brightness(${bright})`;
+      img.style.animation=`td3a ${sp*0.8}s cubic-bezier(0.22,1,0.36,1) both`;
+      break;
+    case 'matrix':
+      // Matrix: flicker from green pixels to actual image
+      img.style.filter=`brightness(4) hue-rotate(90deg) saturate(5)`;
+      img.style.opacity='1';
+      let steps=0;
+      const flicker=setInterval(()=>{
+        steps++;
+        const hue=steps<8?90:0;
+        const sat=steps<8?5:1;
+        const br=steps<8?(4-steps*0.4):bright;
+        img.style.filter=`brightness(${br}) hue-rotate(${hue}deg) saturate(${sat})`;
+        if(steps>=10){clearInterval(flicker);img.style.filter=`brightness(${bright})`;}
+      },sp*100);
+      break;
+    case 'garland':{
+      img.style.opacity='1';
+      img.style.filter=`brightness(${bright})`;
+      let gi=0;
+      const garInt=setInterval(()=>{
+        img.style.filter=`brightness(${bright+1}) hue-rotate(${gi*30}deg) saturate(3)`;
+        gi++;
+        if(gi>8){clearInterval(garInt);img.style.filter=`brightness(${bright})`;}
+      },sp*150);
+      break;
+    }
+    case 'explode':{
+      img.style.filter=`brightness(${bright})`;
+      img.style.opacity='1';
+      // Scale out then in
+      img.style.transition=`transform ${sp*0.4}s ease, opacity ${sp*0.4}s ease`;
+      setTimeout(()=>{
+        img.style.transform='scale(1.6) rotate(5deg)';
+        img.style.opacity='0.1';
+        setTimeout(()=>{
+          img.style.transition=`transform ${sp*0.5}s cubic-bezier(0.22,1,0.36,1), opacity ${sp*0.4}s ease`;
+          img.style.transform='scale(1) rotate(0)';
+          img.style.opacity='1';
+        },sp*450);
+      },sp*100);
+      break;
+    }
+    case 'sizerand':{
+      img.style.filter=`brightness(${bright})`;
+      const sc=(0.3+Math.random()*0.7).toFixed(2);
+      const ro=((Math.random()-0.5)*20).toFixed(1);
+      img.style.transform=`scale(${sc}) rotate(${ro}deg)`;
+      img.style.opacity='1';
+      img.style.transition=`transform ${sp*0.6}s cubic-bezier(0.22,1,0.36,1), opacity ${sp*0.4}s`;
+      setTimeout(()=>{img.style.transform='scale(1) rotate(0)';},50);
+      break;
+    }
+    default:
+      img.style.opacity='0';
+      img.style.filter=`brightness(${bright})`;
+      img.style.transition=`opacity ${sp*0.5}s ease`;
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{img.style.opacity='1';}));
+  }
+}
+
+/* ══════════════════════════════════════
    ANIM SELECT
-════════════════════════════════════ */
+══════════════════════════════════════ */
 function selAnim(name,el){
   curAnim=name;
   document.querySelectorAll('.ac').forEach(c=>c.classList.remove('on'));
   el.classList.add('on');
   document.getElementById('animLbl').textContent=animLabels[name];
   document.getElementById('iAnim').textContent=name;
-  mClose('mAnim');runAnim();
+  mClose('mAnim');
+  runAnim();
 }
 
-/* ════════════════════════════════════
+/* ══════════════════════════════════════
    COLOR WHEEL
-════════════════════════════════════ */
+══════════════════════════════════════ */
 (function(){
   const c=document.getElementById('colorWheel'),ctx=c.getContext('2d'),cx=75,cy=75,r=72;
   for(let a=0;a<360;a++){
@@ -474,32 +632,44 @@ function onBright(v){
   document.getElementById('stage').style.filter=`brightness(${v/100})`;
 }
 
-/* ════════════════════════════════════
-   FONT MODAL
-════════════════════════════════════ */
+/* ══════════════════════════════════════
+   FONT LIST
+══════════════════════════════════════ */
 (function(){
   const fl=document.getElementById('fontList');
-  const lbl=document.createElement('div');lbl.className='flbl';lbl.textContent='Dostupné fonty';fl.appendChild(lbl);
-  fontDefs.forEach((fd,idx)=>{
-    const d=document.createElement('div');d.className='fi'+(idx===0?' on':'');
-    d.textContent=fd.name;d.style.fontFamily=fd.stack;
-    d.onclick=()=>selFont(fd,d);fl.appendChild(d);
+  const lbl=document.createElement('div');lbl.className='flbl';lbl.textContent='Fonty';fl.appendChild(lbl);
+  fontDefs.forEach((fd,i)=>{
+    const d=document.createElement('div');
+    d.className='fi'+(i===0?' on':'');
+    // Show font name + if it's available via Google Fonts
+    d.innerHTML=`<span style="font-family:${fd.stack}">${fd.name}</span>`
+               +(fd.gf?` <span style="font-size:9px;color:var(--acc3);font-family:var(--fm)">✓ GF</span>`:'');
+    d.onclick=()=>selFont(fd,d);
+    fl.appendChild(d);
   });
 })();
 
 function selFont(fd,el){
   curFont=fd.name;curFontStack=fd.stack;
-  document.getElementById('fontLbl').textContent=fd.name;
-  document.getElementById('fontLbl').style.fontFamily=fd.stack;
+  const lbl=document.getElementById('fontLbl');
+  lbl.style.fontFamily=fd.stack;
+  lbl.textContent=fd.name;
   document.getElementById('iFnt').textContent=fd.name;
   document.querySelectorAll('.fi').forEach(i=>i.classList.remove('on'));
-  el.classList.add('on');mClose('mFont');applyS();
+  el.classList.add('on');
+  mClose('mFont');
+  applyS();
 }
 
-/* ════════════════════════════════════
+/* ══════════════════════════════════════
    APPLY STYLES
-════════════════════════════════════ */
+══════════════════════════════════════ */
 function applyS(){
+  if(stageIsSketch){
+    // Re-show sketch with new settings applied
+    if(sketchDataURL) showSketchOnStage();
+    return;
+  }
   const st=document.getElementById('stage');
   const sz=document.getElementById('fSz').value;
   const ls=(document.getElementById('lSp').value/100).toFixed(2);
@@ -507,7 +677,6 @@ function applyS(){
   st.style.fontSize=sz+'px';
   st.style.fontFamily=curFontStack;
   st.style.letterSpacing=ls+'em';
-  // thickness = stroke simulation via text-stroke / paint-order
   st.style.webkitTextStroke=`${th}px ${curColor}`;
   st.querySelectorAll('.ch').forEach(c=>{
     c.style.color=curColor;
@@ -515,9 +684,9 @@ function applyS(){
   });
 }
 
-/* ════════════════════════════════════
+/* ══════════════════════════════════════
    BACKGROUND
-════════════════════════════════════ */
+══════════════════════════════════════ */
 function loadBG(e){
   const f=e.target.files[0];if(!f)return;
   const img=document.getElementById('bgImg');
@@ -528,14 +697,19 @@ function clearBG(){
   document.getElementById('bgInp').value='';
 }
 
-/* ════════════════════════════════════
+/* ══════════════════════════════════════
    ANIMATION ENGINE
-════════════════════════════════════ */
+══════════════════════════════════════ */
 function runAnim(){
+  // If sketch is on stage, re-animate it
+  if(stageIsSketch && sketchDataURL){
+    showSketchOnStage();
+    return;
+  }
   const txt=document.getElementById('uTxt').value||'TEXT';
   saveHist(txt);
   const st=document.getElementById('stage');
-  const sp=getSpeedDur();
+  const sp=getSp();
   st.innerHTML='';st.style.perspective='';st.style.filter='';
   document.getElementById('iCh').textContent=txt.length;
   const r={matrix:rMatrix,lightning:rLightning,neon:rNeon,wave:rWave,bounce:rBounce,
@@ -568,31 +742,26 @@ function rMatrix(t,st,sp){
     st.appendChild(s);
   });
 }
-
 function rLightning(t,st,sp){
   const d=document.createElement('div');d.textContent=t;d.style.color=curColor;
   d.style.animation=`lgtn ${sp}s ease both`;st.appendChild(d);
 }
-
 function rNeon(t,st,sp){
   const d=document.createElement('span');d.textContent=t;d.style.color=curColor;
   d.style.animation=`neonp ${sp*0.6}s ease-in-out infinite`;st.appendChild(d);
 }
-
 function rWave(t,st,sp){
   mkS(t).forEach((s,i,a)=>{
     s.style.animation=`wavech ${sp*0.6}s ease-in-out infinite`;
     s.style.animationDelay=(i/a.length*sp*0.6)+'s';st.appendChild(s);
   });
 }
-
 function rBounce(t,st,sp){
   mkS(t).forEach((s,i)=>{
     s.style.animation=`bounci ${sp*0.6}s cubic-bezier(0.36,0.07,0.19,0.97) both`;
     s.style.animationDelay=(i*0.08)+'s';st.appendChild(s);
   });
 }
-
 function rTypewriter(t,st,sp){
   let i=0;const iv=(sp/t.length)*1000;
   const cur=document.createElement('span');
@@ -608,14 +777,12 @@ function rTypewriter(t,st,sp){
   }
   tp();
 }
-
 function rFadeBlur(t,st,sp){
   mkS(t).forEach((s,i)=>{
     s.style.animation=`fblur ${sp*0.7}s ease both`;
     s.style.animationDelay=(i*0.05)+'s';st.appendChild(s);
   });
 }
-
 function rSizeRand(t,st,sp){
   mkS(t).forEach((s,i)=>{
     const rs=(0.4+Math.random()*1.8).toFixed(2),rr=((Math.random()-0.5)*45).toFixed(1)+'deg';
@@ -625,12 +792,10 @@ function rSizeRand(t,st,sp){
     s.style.animationDelay=(i*0.06)+'s';st.appendChild(s);
   });
 }
-
 function rMirror(t,st,sp){
   const d=document.createElement('div');d.textContent=t;d.style.color=curColor;
   d.style.animation=`mirr ${sp*0.9}s cubic-bezier(0.22,1,0.36,1) both`;st.appendChild(d);
 }
-
 function rExplode(t,st,sp){
   const spans=mkS(t);spans.forEach(s=>{s.style.opacity='0';st.appendChild(s)});
   spans.forEach((s,i)=>{
@@ -646,7 +811,6 @@ function rExplode(t,st,sp){
     },sp*400+spans.length*30+200);
   },at);
 }
-
 function rGarland(t,st,sp){
   mkS(t).forEach((s,i)=>{
     const gc=garCols[i%garCols.length];
@@ -657,7 +821,6 @@ function rGarland(t,st,sp){
     st.appendChild(s);
   });
 }
-
 function rTd3(t,st,sp){
   st.style.perspective='800px';
   mkS(t).forEach((s,i)=>{
@@ -666,222 +829,264 @@ function rTd3(t,st,sp){
   });
 }
 
-/* ════════════════════════════════════
+/* ══════════════════════════════════════
    EXPORT PNG
-════════════════════════════════════ */
+══════════════════════════════════════ */
 function expPNG(){
   const w=1000,h=500,c=document.createElement('canvas');c.width=w;c.height=h;
   const ctx=c.getContext('2d');
   const bg=document.getElementById('bgImg');
-  if(bg.classList.contains('vis')&&bg.src){ctx.drawImage(bg,0,0,w,h)}
+  if(bg.classList.contains('vis')&&bg.src){try{ctx.drawImage(bg,0,0,w,h)}catch(e){}}
   else{ctx.fillStyle='#0a0a0a';ctx.fillRect(0,0,w,h)}
-  const sz=document.getElementById('fSz').value;
-  const th=document.getElementById('thickness').value;
-  ctx.fillStyle=curColor;ctx.strokeStyle=curColor;ctx.lineWidth=parseInt(th);
+  if(stageIsSketch&&sketchDataURL){
+    const si=new Image();si.onload=()=>{
+      const sw=Math.min(w*0.8,si.width),sh=sw*(si.height/si.width);
+      ctx.drawImage(si,(w-sw)/2,(h-sh)/2,sw,sh);
+      dl(c,'textmorph.png');
+    };si.src=sketchDataURL;return;
+  }
+  const sz=parseInt(document.getElementById('fSz').value);
+  const th=parseInt(document.getElementById('thickness').value);
+  ctx.fillStyle=curColor;ctx.strokeStyle=curColor;ctx.lineWidth=th;
   ctx.font=`${sz}px ${curFontStack}`;ctx.textAlign='center';ctx.textBaseline='middle';
-  if(parseInt(th)>1){ctx.strokeText(document.getElementById('uTxt').value||'TEXT',w/2,h/2)}
+  if(th>1)ctx.strokeText(document.getElementById('uTxt').value||'TEXT',w/2,h/2);
   ctx.fillText(document.getElementById('uTxt').value||'TEXT',w/2,h/2);
-  const a=document.createElement('a');a.download='textmorph.png';a.href=c.toDataURL('image/png');a.click();
+  dl(c,'textmorph.png');
 }
+function dl(c,name){const a=document.createElement('a');a.download=name;a.href=c.toDataURL('image/png');a.click()}
 
-/* ════════════════════════════════════
+/* ══════════════════════════════════════
    EXPORT GIF
-   Uses gif.js — captures canvas frames with full animation rendered on canvas
-════════════════════════════════════ */
+══════════════════════════════════════ */
 function expGIF(){
   const btn=document.getElementById('gifBtn');
   btn.textContent='⏳ GIF...';btn.disabled=true;
-  function load(){
-    if(!window.GIF){
-      const s=document.createElement('script');
-      s.src='https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js';
-      s.onload=()=>doGIF(btn);s.onerror=()=>{btn.textContent='⬇ GIF';btn.disabled=false;alert('Chyba: gif.js sa nenačítal')};
-      document.head.appendChild(s);
-    } else doGIF(btn);
-  }
-  load();
+  if(!window.GIF){
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js';
+    s.onload=()=>doGIF(btn);
+    s.onerror=()=>{btn.textContent='⬇ GIF';btn.disabled=false;alert('gif.js sa nenačítal')};
+    document.head.appendChild(s);
+  } else doGIF(btn);
 }
 
 function doGIF(btn){
-  const txt=document.getElementById('uTxt').value||'TEXT';
-  const sp=getSpeedDur();
+  const txt=stageIsSketch?null:document.getElementById('uTxt').value||'TEXT';
+  const sp=getSp();
   const sz=parseInt(document.getElementById('fSz').value);
   const th=parseInt(document.getElementById('thickness').value);
   const w=600,h=300,frames=50;
-  // frame delay in ms — full animation over sp seconds
   const delay=Math.max(20,Math.round(sp*1000/frames));
+  const ls=parseFloat((document.getElementById('lSp').value/100).toFixed(2));
 
-  const gif=new GIF({
-    workers:2,quality:6,width:w,height:h,
+  const gif=new GIF({workers:2,quality:6,width:w,height:h,
     workerScript:'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js',
-    background:'#0a0a0a'
-  });
+    background:'#0a0a0a'});
 
   const c=document.createElement('canvas');c.width=w;c.height=h;
   const ctx=c.getContext('2d');
   const bg=document.getElementById('bgImg');
-  const ls=parseFloat((document.getElementById('lSp').value/100).toFixed(2));
+
+  // If sketch mode — animate sketch image across frames
+  if(stageIsSketch&&sketchDataURL){
+    const si=new Image();
+    si.onload=()=>{
+      for(let f=0;f<frames;f++){
+        const t=f/(frames-1);
+        ctx.clearRect(0,0,w,h);
+        if(bg.classList.contains('vis')&&bg.src){try{ctx.drawImage(bg,0,0,w,h)}catch(e){ctx.fillStyle='#0a0a0a';ctx.fillRect(0,0,w,h)}}
+        else{ctx.fillStyle='#0a0a0a';ctx.fillRect(0,0,w,h)}
+        ctx.save();
+        gifSketchFrame(ctx,si,curAnim,t,w,h);
+        ctx.restore();
+        gif.addFrame(ctx,{copy:true,delay});
+      }
+      finishGIF(gif,btn);
+    };
+    si.src=sketchDataURL;
+    return;
+  }
 
   for(let f=0;f<frames;f++){
-    const t=f/(frames-1); // 0 → 1
+    const t=f/(frames-1);
     ctx.clearRect(0,0,w,h);
-    // background
     if(bg.classList.contains('vis')&&bg.src){try{ctx.drawImage(bg,0,0,w,h)}catch(e){ctx.fillStyle='#0a0a0a';ctx.fillRect(0,0,w,h)}}
     else{ctx.fillStyle='#0a0a0a';ctx.fillRect(0,0,w,h)}
-
     ctx.save();
     ctx.textAlign='center';ctx.textBaseline='middle';
-    // approximate letterSpacing
     ctx.font=`${sz}px ${curFontStack}`;
     ctx.fillStyle=curColor;ctx.strokeStyle=curColor;ctx.lineWidth=th;
     gifFrame(ctx,curAnim,txt,t,w,h,sz,th,ls);
     ctx.restore();
     gif.addFrame(ctx,{copy:true,delay});
   }
+  finishGIF(gif,btn);
+}
 
+function finishGIF(gif,btn){
   gif.on('finished',blob=>{
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');a.download='textmorph-anim.gif';a.href=url;
+    const a=document.createElement('a');a.download='textmorph-anim.gif';
+    a.href=URL.createObjectURL(blob);
     document.body.appendChild(a);a.click();document.body.removeChild(a);
-    setTimeout(()=>URL.revokeObjectURL(url),1000);
     btn.textContent='⬇ GIF';btn.disabled=false;
   });
-  gif.on('error',err=>{console.error(err);btn.textContent='⬇ GIF';btn.disabled=false;});
+  gif.on('error',()=>{btn.textContent='⬇ GIF';btn.disabled=false});
   gif.render();
 }
 
-function drawTextWithLS(ctx,txt,x,y,ls,sz,fill,stroke,th){
-  // Manual letter spacing
-  const chars=[...txt];
-  const charW=sz*0.6+ls*sz;
-  const totalW=chars.length*charW;
-  let cx=x-totalW/2+charW/2;
-  chars.forEach(ch=>{
-    if(th>1){ctx.strokeText(ch,cx,y)}
+function gifSketchFrame(ctx,si,anim,t,w,h){
+  const sw=Math.min(w*0.7,si.width||300);
+  const sh=si.height?(sw*(si.height/si.width)):sw*0.5;
+  const dx=(w-sw)/2,dy=(h-sh)/2;
+  const bright=parseInt(document.getElementById('brightSl').value)/100;
+  switch(anim){
+    case 'fadeblur':
+      ctx.globalAlpha=Math.min(1,t*2);
+      ctx.filter=`blur(${Math.max(0,(1-t)*14)}px) brightness(${bright})`;
+      ctx.drawImage(si,dx,dy,sw,sh);ctx.filter='none';break;
+    case 'wave':
+      ctx.translate(0,Math.sin(t*Math.PI*4)*18);
+      ctx.filter=`brightness(${bright})`;
+      ctx.drawImage(si,dx,dy,sw,sh);ctx.filter='none';break;
+    case 'neon':
+      ctx.shadowColor=curColor;ctx.shadowBlur=15+Math.sin(t*Math.PI*8)*40;
+      ctx.filter=`brightness(${bright+Math.sin(t*Math.PI*8)*0.4})`;
+      ctx.drawImage(si,dx,dy,sw,sh);ctx.filter='none';ctx.shadowBlur=0;break;
+    case 'bounce':{
+      const ph=Math.min(1,t*1.5);const yo=ph<0.6?-Math.sin(ph/0.6*Math.PI)*30:0;
+      ctx.globalAlpha=Math.min(1,t*3);ctx.filter=`brightness(${bright})`;
+      ctx.drawImage(si,dx,dy+yo,sw,sh);ctx.filter='none';break;}
+    case 'mirror':
+      ctx.filter=`brightness(${bright})`;
+      if(t<0.5){ctx.translate(w,0);ctx.scale(-1,1);ctx.drawImage(si,w-dx-sw,dy,sw,sh);}
+      else ctx.drawImage(si,dx,dy,sw,sh);
+      ctx.filter='none';break;
+    case 'lightning':{
+      const lp=t<0.2?t*5:t<0.38?1-(t-0.2)*5.5:t<0.55?t*1.8:1;
+      ctx.globalAlpha=Math.max(0,Math.min(1,lp));
+      ctx.shadowColor=curColor;ctx.shadowBlur=t<0.38?60:0;
+      ctx.filter=`brightness(${bright})`;ctx.drawImage(si,dx,dy,sw,sh);ctx.filter='none';ctx.shadowBlur=0;break;}
+    case 'td3':{
+      const rx=(1-Math.min(1,t*1.5))*80*Math.PI/180;
+      ctx.globalAlpha=Math.min(1,t*2);ctx.filter=`brightness(${bright})`;
+      ctx.translate(w/2,h/2);ctx.transform(1,0,0,Math.cos(rx),0,0);
+      ctx.drawImage(si,-sw/2,-sh/2,sw,sh);ctx.filter='none';break;}
+    case 'explode':{
+      ctx.filter=`brightness(${bright})`;
+      if(t<0.4){ctx.globalAlpha=t/0.4;ctx.drawImage(si,dx,dy,sw,sh);}
+      else if(t<0.6){const et=(t-0.4)/0.2;ctx.globalAlpha=1-et;ctx.drawImage(si,dx+et*100,dy+et*50,sw*(1+et*0.5),sh*(1+et*0.5));}
+      else{const it=(t-0.6)/0.4;ctx.globalAlpha=it;ctx.drawImage(si,dx,dy,sw,sh);}
+      ctx.filter='none';break;}
+    case 'garland':
+      ctx.filter=`brightness(${bright}) hue-rotate(${t*360}deg) saturate(2)`;
+      ctx.drawImage(si,dx,dy,sw,sh);ctx.filter='none';break;
+    case 'sizerand':{
+      const sc=1+Math.sin(t*Math.PI*3)*0.2;
+      ctx.globalAlpha=Math.min(1,t*3);ctx.filter=`brightness(${bright})`;
+      ctx.translate(w/2,h/2);ctx.scale(sc,sc);ctx.drawImage(si,-sw/2,-sh/2,sw,sh);ctx.filter='none';break;}
+    default:
+      ctx.globalAlpha=Math.min(1,t*3);ctx.filter=`brightness(${bright})`;
+      ctx.drawImage(si,dx,dy,sw,sh);ctx.filter='none';
+  }
+}
+
+function drawTextWithLS(ctx,txt,x,y,ls,sz,fill,doStroke,th){
+  const cw=sz*0.62+ls*sz;
+  const total=[...txt].length;
+  let cx=x-total*cw/2+cw/2;
+  [...txt].forEach(ch=>{
+    if(doStroke)ctx.strokeText(ch,cx,y);
     if(fill)ctx.fillText(ch,cx,y);
-    cx+=charW;
+    cx+=cw;
   });
 }
 
 function gifFrame(ctx,anim,txt,t,w,h,sz,th,ls){
-  const cw=sz*0.6+ls*sz;
-  const totalW=[...txt].length*cw;
-  function drawCh(ch,cx,cy){
-    if(th>1)ctx.strokeText(ch,cx,cy);
-    ctx.fillText(ch,cx,cy);
-  }
-  function xOf(i,total){return w/2-(total/2-i-0.5)*cw}
-
+  const cw=sz*0.62+ls*sz;
+  function xOf(i,n){return w/2-(n/2-i-0.5)*cw}
+  const doStroke=th>1;
   ctx.fillStyle=curColor;ctx.strokeStyle=curColor;
 
   switch(anim){
     case 'fadeblur':
-      ctx.globalAlpha=Math.min(1,t*2);
-      ctx.filter=`blur(${Math.max(0,(1-t)*14)}px)`;
-      drawTextWithLS(ctx,txt,w/2,h/2,ls,sz,true,th>1,th);
-      ctx.filter='none';break;
-
+      ctx.globalAlpha=Math.min(1,t*2);ctx.filter=`blur(${Math.max(0,(1-t)*14)}px)`;
+      drawTextWithLS(ctx,txt,w/2,h/2,ls,sz,true,doStroke,th);ctx.filter='none';break;
     case 'wave':
       [...txt].forEach((ch,i)=>{
         const yo=Math.sin((i/txt.length+t)*Math.PI*2)*22;
-        drawCh(ch,xOf(i,txt.length),h/2+yo);
+        if(doStroke)ctx.strokeText(ch,xOf(i,txt.length),h/2+yo);
+        ctx.fillText(ch,xOf(i,txt.length),h/2+yo);
       });break;
-
     case 'neon':
-      const pulse=0.5+0.5*Math.sin(t*Math.PI*8);
-      ctx.shadowColor=curColor;ctx.shadowBlur=15+pulse*45;
-      ctx.globalAlpha=0.75+pulse*0.25;
-      drawTextWithLS(ctx,txt,w/2,h/2,ls,sz,true,false,0);
-      ctx.shadowBlur=0;break;
-
+      ctx.shadowColor=curColor;ctx.shadowBlur=15+Math.sin(t*Math.PI*8)*45;
+      ctx.globalAlpha=0.75+Math.sin(t*Math.PI*8)*0.25;
+      drawTextWithLS(ctx,txt,w/2,h/2,ls,sz,true,false,0);ctx.shadowBlur=0;break;
     case 'garland':
       [...txt].forEach((ch,i)=>{
-        ctx.fillStyle=`hsl(${(i*37+t*360)%360},100%,60%)`;
-        ctx.strokeStyle=ctx.fillStyle;ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=14;
-        drawCh(ch,xOf(i,txt.length),h/2);
+        ctx.fillStyle=`hsl(${(i*37+t*360)%360},100%,60%)`;ctx.strokeStyle=ctx.fillStyle;
+        ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=14;
+        if(doStroke)ctx.strokeText(ch,xOf(i,txt.length),h/2);
+        ctx.fillText(ch,xOf(i,txt.length),h/2);
       });ctx.shadowBlur=0;break;
-
     case 'mirror':
-      ctx.save();
-      if(t<0.5){ctx.translate(w,0);ctx.scale(-1,1)}
+      ctx.save();if(t<0.5){ctx.translate(w,0);ctx.scale(-1,1)}
       ctx.globalAlpha=Math.min(1,t*3);
-      drawTextWithLS(ctx,txt,t<0.5?0:w/2,h/2,ls,sz,true,th>1,th);
-      ctx.restore();break;
-
+      drawTextWithLS(ctx,txt,t<0.5?0:w/2,h/2,ls,sz,true,doStroke,th);ctx.restore();break;
     case 'bounce':
       [...txt].forEach((ch,i)=>{
         const ph=Math.max(0,t-(i/txt.length)*0.4)*2.5;
         const yo=ph<1?-Math.sin(ph*Math.PI)*28:0;
         ctx.globalAlpha=Math.min(1,t*4);
-        drawCh(ch,xOf(i,txt.length),h/2+yo);
+        if(doStroke)ctx.strokeText(ch,xOf(i,txt.length),h/2+yo);
+        ctx.fillText(ch,xOf(i,txt.length),h/2+yo);
       });break;
-
     case 'matrix':
-      const chars='01';
       [...txt].forEach((ch,i)=>{
-        const revealed=t>(i/txt.length)*0.7;
-        ctx.fillStyle=revealed?curColor:'#00ff41';ctx.strokeStyle=ctx.fillStyle;
-        drawCh(revealed?ch:(Math.random()<0.5?'0':'1'),xOf(i,txt.length),h/2);
+        const rev=t>(i/txt.length)*0.7;ctx.fillStyle=rev?curColor:'#00ff41';ctx.strokeStyle=ctx.fillStyle;
+        if(doStroke)ctx.strokeText(rev?ch:(Math.random()<0.5?'0':'1'),xOf(i,txt.length),h/2);
+        ctx.fillText(rev?ch:(Math.random()<0.5?'0':'1'),xOf(i,txt.length),h/2);
       });break;
-
-    case 'lightning':
+    case 'lightning':{
       const lp=t<0.2?t*5:t<0.38?1-(t-0.2)*5.5:t<0.55?t*1.8:1;
-      ctx.globalAlpha=Math.max(0,Math.min(1,lp));
-      ctx.shadowColor=curColor;ctx.shadowBlur=t<0.38?60:0;
-      drawTextWithLS(ctx,txt,w/2,h/2,ls,sz,true,th>1,th);
-      ctx.shadowBlur=0;break;
-
+      ctx.globalAlpha=Math.max(0,Math.min(1,lp));ctx.shadowColor=curColor;ctx.shadowBlur=t<0.38?60:0;
+      drawTextWithLS(ctx,txt,w/2,h/2,ls,sz,true,doStroke,th);ctx.shadowBlur=0;break;}
     case 'td3':{
       const rx=(1-Math.min(1,t*1.5))*80*Math.PI/180;
-      ctx.globalAlpha=Math.min(1,t*2.2);
-      ctx.save();ctx.translate(w/2,h/2);
+      ctx.globalAlpha=Math.min(1,t*2.2);ctx.save();ctx.translate(w/2,h/2);
       ctx.transform(1,0,0,Math.cos(rx),0,0);
-      drawTextWithLS(ctx,txt,0,0,ls,sz,true,th>1,th);
-      ctx.restore();break;}
-
+      drawTextWithLS(ctx,txt,0,0,ls,sz,true,doStroke,th);ctx.restore();break;}
     case 'sizerand':
       [...txt].forEach((ch,i)=>{
         const sc=1+Math.sin((i*1.3+t*5))*0.3;
         ctx.save();ctx.translate(xOf(i,txt.length),h/2);ctx.scale(sc,sc);
-        drawCh(ch,0,0);ctx.restore();
+        if(doStroke)ctx.strokeText(ch,0,0);ctx.fillText(ch,0,0);ctx.restore();
       });break;
-
     case 'explode':
-      if(t<0.4){
-        ctx.globalAlpha=t/0.4;
-        drawTextWithLS(ctx,txt,w/2,h/2,ls,sz,true,th>1,th);
-      } else if(t<0.6){
+      if(t<0.4){ctx.globalAlpha=t/0.4;drawTextWithLS(ctx,txt,w/2,h/2,ls,sz,true,doStroke,th);}
+      else if(t<0.6){
         const et=(t-0.4)/0.2;
         [...txt].forEach((ch,i)=>{
-          const ex=Math.sin(i*1.7)*200*et,ey=Math.cos(i*2.1)*150*et;
-          ctx.globalAlpha=1-et;ctx.save();ctx.translate(xOf(i,txt.length)+ex,h/2+ey);
-          ctx.rotate(et*i*0.5);drawCh(ch,0,0);ctx.restore();
+          ctx.globalAlpha=1-et;ctx.save();ctx.translate(xOf(i,txt.length)+Math.sin(i*1.7)*200*et,h/2+Math.cos(i*2.1)*150*et);
+          ctx.rotate(et*i*0.5);if(doStroke)ctx.strokeText(ch,0,0);ctx.fillText(ch,0,0);ctx.restore();
         });
-      } else {
+      }else{
         const it=(t-0.6)/0.4;
         [...txt].forEach((ch,i)=>{
-          const ex=Math.sin(i*1.7)*200*(1-it),ey=Math.cos(i*2.1)*150*(1-it);
-          ctx.globalAlpha=it;ctx.save();ctx.translate(xOf(i,txt.length)+ex,h/2+ey);
-          ctx.rotate((1-it)*i*0.5);drawCh(ch,0,0);ctx.restore();
+          ctx.globalAlpha=it;ctx.save();ctx.translate(xOf(i,txt.length)+Math.sin(i*1.7)*200*(1-it),h/2+Math.cos(i*2.1)*150*(1-it));
+          ctx.rotate((1-it)*i*0.5);if(doStroke)ctx.strokeText(ch,0,0);ctx.fillText(ch,0,0);ctx.restore();
         });
       }break;
-
-    case 'fadeblur':
     default:
       ctx.globalAlpha=Math.min(1,t*3);
-      drawTextWithLS(ctx,txt,w/2,h/2,ls,sz,true,th>1,th);
+      drawTextWithLS(ctx,txt,w/2,h/2,ls,sz,true,doStroke,th);
   }
 }
 
-/* ════════════════════════════════════
+/* ══════════════════════════════════════
    INIT
-════════════════════════════════════ */
+══════════════════════════════════════ */
 window.addEventListener('load',()=>{
   runAnim();
-  // Init sketch canvas size
-  const wrap=document.getElementById('tdWrap');
-  const sc=document.getElementById('sketchC');
-  sc.width=wrap.clientWidth||260;sc.height=80;
 });
 </script>
 </body>

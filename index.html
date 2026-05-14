@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TextMorph Studio</title>
+<style>
+/* ── Custom fonts from fonts-online.ru CDN (loaded via @font-face via data URI workaround — we use Google Fonts for system fallback + declare font names) ── */
+:root{
+  --bg:#0a0a0a;--s1:#111;--s2:#1a1a1a;--s3:#222;
+  --br:#2a2a2a;--acc:#e8ff00;--acc2:#ff3c6e;--acc3:#00f5d4;
+  --txt:#f0f0f0;--dim:#666;--dim2:#444;
+  --fm:'Space Mono',monospace;
+}
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--txt);font-family:var(--fm);min-height:100vh;overflow-x:hidden}
+
+.app{display:grid;grid-template-columns:300px 1fr;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{border-right:1px solid var(--br);display:flex;flex-direction:column;background:var(--s1);max-height:100vh;position:sticky;top:0}
+.logo{padding:16px 18px 12px;border-bottom:1px solid var(--br);flex-shrink:0}
+.logo h1{font-family:'Space Mono',monospace;font-size:22px;letter-spacing:0.12em;line-height:1;font-weight:700}
+.logo h1 span{color:var(--acc)}
+.sidebar-inner{overflow-y:auto;flex:1;display:flex;flex-direction:column}
+
+.sec{border-bottom:1px solid var(--br);padding:12px 14px}
+.sec-lbl{font-family:var(--fm);font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+
+/* Text + draw area */
+.txt-draw-wrap{position:relative;width:100%;background:var(--s2);border:1px solid var(--br);transition:border-color 0.2s}
+.txt-draw-wrap:focus-within{border-color:var(--acc)}
+#uTxt{width:100%;background:transparent;border:none;color:var(--txt);font-family:var(--fm);font-size:13px;padding:9px;outline:none;resize:none;display:block;min-height:60px;position:relative;z-index:2}
+#sketchC{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none;opacity:0.5}
+
+.draw-mode-row{display:flex;align-items:center;gap:7px;margin-top:6px;flex-wrap:wrap}
+.draw-mode-row label{font-family:var(--fm);font-size:9px;color:var(--dim);letter-spacing:0.08em;text-transform:uppercase;display:flex;align-items:center;gap:4px;cursor:pointer}
+input[type=checkbox]{accent-color:var(--acc);cursor:pointer}
+
+.hist-pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;min-height:16px}
+.hpill{background:var(--s3);border:1px solid var(--br);color:var(--dim);font-family:var(--fm);font-size:9px;padding:3px 8px;cursor:pointer;letter-spacing:0.05em;transition:all 0.15s;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hpill:hover{color:var(--acc);border-color:var(--acc)}
+
+.big-btn{width:100%;background:var(--s2);border:1px solid var(--br);color:var(--txt);font-family:var(--fm);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;padding:10px 13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all 0.2s;text-align:left}
+.big-btn:hover{border-color:var(--acc);color:var(--acc)}
+.big-btn .arr{color:var(--acc);font-size:13px;flex-shrink:0}
+
+/* Color wheel */
+.cw-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
+#colorWheel{border-radius:50%;cursor:crosshair;border:2px solid var(--br);display:block}
+.cw-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:center}
+.cw-prev{width:24px;height:24px;border-radius:50%;border:2px solid var(--br);flex-shrink:0}
+.cw-hex{font-family:var(--fm);font-size:10px;color:var(--dim)}
+
+/* Sliders */
+.sl-row{display:flex;justify-content:space-between;margin-bottom:3px}
+.sl-row span{font-family:var(--fm);font-size:9px;color:var(--dim);letter-spacing:0.06em;text-transform:uppercase}
+.sl-row .v{color:var(--acc)}
+input[type=range]{width:100%;-webkit-appearance:none;height:2px;background:var(--br);outline:none;margin-bottom:9px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:var(--acc);cursor:pointer}
+
+.run-btn{width:100%;background:var(--acc);color:#000;font-family:'Space Mono',monospace;font-size:20px;font-weight:700;letter-spacing:0.1em;padding:14px;border:none;cursor:pointer;transition:all 0.2s;flex-shrink:0}
+.run-btn:hover{background:#fff;letter-spacing:0.22em}
+
+/* PREVIEW */
+.preview{display:flex;flex-direction:column}
+.ptbar{display:flex;align-items:center;gap:7px;padding:10px 16px;border-bottom:1px solid var(--br);background:var(--s1);flex-wrap:wrap}
+.ptbar-lbl{font-family:var(--fm);font-size:9px;color:var(--dim);letter-spacing:0.12em;text-transform:uppercase}
+.tbtn{background:var(--s2);border:1px solid var(--br);color:var(--dim);font-family:var(--fm);font-size:9px;padding:5px 10px;cursor:pointer;letter-spacing:0.06em;text-transform:uppercase;transition:all 0.15s;white-space:nowrap}
+.tbtn:hover,.tbtn.on{color:var(--acc);border-color:var(--acc);background:rgba(232,255,0,0.06)}
+
+.cwrap{flex:1;display:flex;align-items:center;justify-content:center;padding:40px;position:relative;background:radial-gradient(ellipse at 50% 50%,#131313 0%,#0a0a0a 100%);overflow:hidden;min-height:400px}
+.cwrap::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0}
+#bgImg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 0.4s;z-index:1}
+#bgImg.vis{opacity:1}
+#stage{position:relative;z-index:2;text-align:center;max-width:960px;width:100%;line-height:1.1;word-break:break-word;user-select:none}
+
+.bbar{border-top:1px solid var(--br);padding:9px 16px;display:flex;gap:12px;align-items:center;background:var(--s1);flex-wrap:wrap}
+.ipill{font-family:var(--fm);font-size:9px;color:var(--dim);letter-spacing:0.05em}
+.ipill strong{color:var(--acc3);font-weight:400}
+.bbar-right{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+
+/* MODALS */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:500;display:none;align-items:center;justify-content:center;padding:16px}
+.mo.open{display:flex}
+.mbox{background:var(--s1);border:1px solid var(--br);padding:24px;max-width:680px;width:100%;max-height:88vh;overflow-y:auto;position:relative}
+.mbox h2{font-family:'Space Mono',monospace;font-size:18px;letter-spacing:0.1em;margin-bottom:16px;font-weight:700}
+.mbox h2 span{color:var(--acc)}
+.mcl{position:absolute;top:12px;right:12px;background:none;border:1px solid var(--br);color:var(--dim);font-family:var(--fm);font-size:10px;padding:4px 10px;cursor:pointer;transition:all 0.15s}
+.mcl:hover{color:var(--acc2);border-color:var(--acc2)}
+
+/* Anim grid */
+.agrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ac{background:var(--s2);border:1px solid var(--br);padding:13px 7px;cursor:pointer;transition:all 0.15s;text-align:center}
+.ac:hover,.ac.on{border-color:var(--acc);background:rgba(232,255,0,0.06)}
+.ai{font-size:22px;margin-bottom:4px}
+.an{font-family:var(--fm);font-size:9px;color:var(--dim);letter-spacing:0.07em;text-transform:uppercase}
+.ad{font-size:9px;color:var(--dim2);margin-top:2px;font-family:var(--fm)}
+.ac.on .an{color:var(--acc)}
+
+/* Font list */
+.fl{display:flex;flex-direction:column;gap:2px}
+.fi{padding:11px 14px;cursor:pointer;border:1px solid transparent;transition:all 0.15s;font-size:18px;color:var(--txt)}
+.fi:hover{border-color:var(--br);background:var(--s2)}
+.fi.on{border-color:var(--acc);background:rgba(232,255,0,0.06);color:var(--acc)}
+.flbl{font-family:var(--fm);font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--dim2);padding:7px 0 3px;border-bottom:1px solid var(--br);margin-bottom:3px}
+
+/* ── KEYFRAMES ── */
+@keyframes twblink{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes wavech{0%,100%{transform:translateY(0)}50%{transform:translateY(-22px)}}
+@keyframes neonp{0%,100%{text-shadow:0 0 8px currentColor,0 0 28px currentColor,0 0 70px currentColor;opacity:1}50%{text-shadow:0 0 2px currentColor,0 0 6px currentColor;opacity:0.55}}
+@keyframes bounci{0%{opacity:0;transform:scale(0) translateY(-80px)}60%{opacity:1;transform:scale(1.15) translateY(8px)}80%{transform:scale(0.95) translateY(-4px)}100%{transform:scale(1) translateY(0)}}
+@keyframes fblur{0%{opacity:0;filter:blur(20px)}100%{opacity:1;filter:blur(0)}}
+@keyframes mirr{0%{transform:scaleX(-1);opacity:0.3}55%{transform:scaleX(-1);opacity:1}100%{transform:scaleX(1);opacity:1}}
+@keyframes exout{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--ex),var(--ey)) scale(0.2) rotate(var(--er));opacity:0}}
+@keyframes exin{0%{transform:translate(var(--ex),var(--ey)) scale(0.2) rotate(var(--er));opacity:0}100%{transform:translate(0,0) scale(1) rotate(0);opacity:1}}
+@keyframes garfl{0%{color:var(--gc);text-shadow:0 0 12px var(--gc),0 0 35px var(--gc)}50%{color:#fff;text-shadow:0 0 4px #fff}100%{color:var(--gc);text-shadow:0 0 12px var(--gc)}}
+@keyframes szr{0%{transform:scale(var(--rs)) rotate(var(--rr));opacity:0}100%{transform:scale(1) rotate(0deg);opacity:1}}
+@keyframes td3a{0%{transform:perspective(600px) rotateX(80deg) translateZ(-100px);opacity:0}100%{transform:perspective(600px) rotateX(0deg) translateZ(0);opacity:1}}
+@keyframes lgtn{0%{opacity:0;filter:brightness(15) blur(10px);transform:scale(1.6)}20%{opacity:1;filter:brightness(4) blur(0);transform:scale(1.05)}35%{opacity:0.2;filter:brightness(12) blur(5px)}55%{opacity:1;filter:brightness(1.5) blur(0);transform:scale(1)}100%{opacity:1;filter:brightness(1)}}
+@keyframes matfall{0%{opacity:0;transform:translateY(-40px);filter:brightness(4)}30%{opacity:1;filter:brightness(2)}100%{opacity:1;transform:translateY(0);filter:brightness(1)}}
+</style>
+</head>
+<body>
+
+<!-- ══ ANIM MODAL ══ -->
+<div class="mo" id="mAnim">
+<div class="mbox">
+  <button class="mcl" onclick="mClose('mAnim')">✕</button>
+  <h2>Vyber <span>Animáciu</span></h2>
+  <div class="agrid">
+    <div class="ac on" onclick="selAnim('matrix',this)"><div class="ai">🟩</div><div class="an">Matica</div><div class="ad">0 a 1 → slovo</div></div>
+    <div class="ac" onclick="selAnim('lightning',this)"><div class="ai">⚡</div><div class="an">Blesk</div><div class="ad">Slovo ako blesk</div></div>
+    <div class="ac" onclick="selAnim('neon',this)"><div class="ai">💡</div><div class="an">Žiarovka</div><div class="ad">Jasné blikanie</div></div>
+    <div class="ac" onclick="selAnim('wave',this)"><div class="ai">🌊</div><div class="an">Vlna</div><div class="ad">Kolísanie vlnou</div></div>
+    <div class="ac" onclick="selAnim('bounce',this)"><div class="ai">🏀</div><div class="an">Mačík</div><div class="ad">Písmená skáču</div></div>
+    <div class="ac" onclick="selAnim('typewriter',this)"><div class="ai">⌨️</div><div class="an">Písací stroj</div><div class="ad">Postupné písanie</div></div>
+    <div class="ac" onclick="selAnim('fadeblur',this)"><div class="ai">🌫️</div><div class="an">Blur</div><div class="ad">Rozmazané → ostré</div></div>
+    <div class="ac" onclick="selAnim('sizerand',this)"><div class="ai">📐</div><div class="an">Rozmer</div><div class="ad">Rôzne veľkosti</div></div>
+    <div class="ac" onclick="selAnim('mirror',this)"><div class="ai">🪞</div><div class="an">Zrkadlo</div><div class="ad">Zrkadlové → normálne</div></div>
+    <div class="ac" onclick="selAnim('explode',this)"><div class="ai">💥</div><div class="an">Výbuch</div><div class="ad">Rozlet → zloženie</div></div>
+    <div class="ac" onclick="selAnim('garland',this)"><div class="ai">🎄</div><div class="an">Girlanda</div><div class="ad">Farebné blikanie</div></div>
+    <div class="ac" onclick="selAnim('td3',this)"><div class="ai">🎲</div><div class="an">3D</div><div class="ad">Perspektívny nájazd</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ══ FONT MODAL ══ -->
+<div class="mo" id="mFont">
+<div class="mbox" style="max-width:420px">
+  <button class="mcl" onclick="mClose('mFont')">✕</button>
+  <h2>Vyber <span>Font</span></h2>
+  <div class="fl" id="fontList"></div>
+</div>
+</div>
+
+<!-- ══ APP ══ -->
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo"><h1>Text<span>Morph</span></h1></div>
+  <div class="sidebar-inner">
+
+    <!-- TEXT + DRAW -->
+    <div class="sec">
+      <div class="sec-lbl">Tvoj text</div>
+      <div class="txt-draw-wrap" id="tdWrap">
+        <canvas id="sketchC"></canvas>
+        <textarea id="uTxt" rows="3" placeholder="Napíš alebo nakresli..." oninput="onTxtIn()" onkeydown="onTxtKey(event)"></textarea>
+      </div>
+      <div class="draw-mode-row">
+        <label>
+          <input type="checkbox" id="drawToggle" onchange="toggleSketch(this.checked)">
+          ✏️ Kresliť myšou
+        </label>
+        <span id="sketchInfo" style="font-size:9px;color:var(--dim);display:none">PKM = kresliť</span>
+        <button class="tbtn" id="clearSkBtn" style="display:none;font-size:9px;padding:3px 7px" onclick="clearSketch()">✕ Vymazať</button>
+        <button class="tbtn" id="sendSkBtn" style="display:none;font-size:9px;padding:3px 7px;color:var(--acc);border-color:var(--acc)" onclick="sendSketchToStage()">→ Na scénu</button>
+      </div>
+      <div class="hist-pills" id="hist"></div>
+    </div>
+
+    <!-- ANIM -->
+    <div class="sec">
+      <div class="sec-lbl">Animácia</div>
+      <button class="big-btn" onclick="mOpen('mAnim')">
+        <span id="animLbl">🟩 Matica</span><span class="arr">▼</span>
+      </button>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="sec">
+      <div class="sec-lbl">Nastavenia</div>
+
+      <div class="sl-row"><span>Veľkosť</span><span class="v" id="szV">80px</span></div>
+      <input type="range" min="16" max="180" value="80" id="fSz" oninput="szV.textContent=this.value+'px';applyS()">
+
+      <div class="sl-row"><span>Rýchlosť</span><span class="v" id="spV">0%</span></div>
+      <input type="range" min="0" max="100" value="0" id="spd" oninput="onSpdChange(this.value)">
+
+      <div class="sl-row"><span>Hrúbka</span><span class="v" id="thV">2px</span></div>
+      <input type="range" min="1" max="30" value="2" id="thickness" oninput="thV.textContent=this.value+'px';applyS()">
+
+      <div class="sl-row"><span>Medzery</span><span class="v" id="lsV">0.05em</span></div>
+      <input type="range" min="-5" max="30" value="5" id="lSp" oninput="lsV.textContent=(this.value/100).toFixed(2)+'em';applyS()">
+    </div>
+
+    <!-- COLOR WHEEL -->
+    <div class="sec">
+      <div class="sec-lbl">Farba textu</div>
+      <div class="cw-wrap">
+        <canvas id="colorWheel" width="150" height="150"></canvas>
+        <div class="cw-row">
+          <div class="cw-prev" id="cPrev" style="background:#e8ff00"></div>
+          <div class="cw-hex" id="cHex">#e8ff00</div>
+          <input type="range" min="0" max="100" value="100" id="brightSl" style="width:65px;margin-bottom:0" oninput="onBright(this.value)">
+          <span style="font-family:var(--fm);font-size:9px;color:var(--dim)" id="brightV">100%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- FONT -->
+    <div class="sec">
+      <div class="sec-lbl">Font</div>
+      <button class="big-btn" onclick="mOpen('mFont')">
+        <span id="fontLbl" style="font-size:14px">Heinz Sans</span><span class="arr">▼</span>
+      </button>
+    </div>
+
+    <!-- RUN -->
+    <div style="padding:14px;margin-top:auto">
+      <button class="run-btn" onclick="runAnim()">▶ SPUSTIŤ</button>
+    </div>
+  </div>
+</aside>
+
+<!-- PREVIEW -->
+<div class="preview">
+  <div class="ptbar">
+    <span class="ptbar-lbl">Náhľad</span>
+    <button class="tbtn" onclick="runAnim()">↺ Replay</button>
+    <button class="tbtn" onclick="expPNG()">⬇ PNG</button>
+    <button class="tbtn" id="gifBtn" onclick="expGIF()">⬇ GIF</button>
+  </div>
+
+  <div class="cwrap" id="cWrap">
+    <img id="bgImg" alt="">
+    <div id="stage"></div>
+  </div>
+
+  <div class="bbar">
+    <div class="ipill">Animácia: <strong id="iAnim">matrix</strong></div>
+    <div class="ipill">Znaky: <strong id="iCh">0</strong></div>
+    <div class="ipill">Font: <strong id="iFnt">Heinz Sans</strong></div>
+    <div class="ipill">Rýchlosť: <strong id="iSpd">0%</strong></div>
+    <div class="bbar-right">
+      <button class="tbtn" onclick="document.getElementById('bgInp').click()">🖼 Pozadie</button>
+      <input type="file" id="bgInp" accept="image/*" style="display:none" onchange="loadBG(event)">
+      <button class="tbtn" onclick="clearBG()">✕ Bez pozadia</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+/* ════════════════════════════════════
+   STATE
+════════════════════════════════════ */
+let curAnim='matrix', curColor='#e8ff00', curFont='Heinz Sans';
+let hist=[], sketchMode=false, sketchDrawing=false;
+let sketchCtx=null;
+const garCols=['#ff3c6e','#e8ff00','#00f5d4','#ff8c00','#a78bfa','#fff','#ff69b4','#00bfff'];
+
+// Speed: 0% = base duration 2s, 100% = 0.5s (×2 faster)
+function getSpeedDur(){
+  const pct=parseInt(document.getElementById('spd').value);
+  // 0% → 2.0s, 100% → 0.5s
+  return 2.0 - (pct/100)*1.5;
+}
+
+const animLabels={
+  matrix:'🟩 Matica',lightning:'⚡ Blesk',neon:'💡 Žiarovka',wave:'🌊 Vlna',
+  bounce:'🏀 Mačík',typewriter:'⌨️ Písací stroj',fadeblur:'🌫️ Blur',
+  sizerand:'📐 Rozmer',mirror:'🪞 Zrkadlo',explode:'💥 Výbuch',
+  garland:'🎄 Girlanda',td3:'🎲 3D'
+};
+
+/* ════════════════════════════════════
+   CUSTOM FONTS
+   Since fonts-online.ru doesn't provide @font-face CDN links,
+   we define them with system/generic fallbacks and show names correctly.
+   Users can install fonts locally; names are declared for recognition.
+════════════════════════════════════ */
+const fontDefs=[
+  {name:'Heinz Sans',       stack:'"Heinz Sans","Arial Narrow",sans-serif'},
+  {name:'Delaghen',         stack:'"Delaghen","Palatino Linotype",serif'},
+  {name:'Make Things',      stack:'"Make Things","Comic Sans MS",cursive'},
+  {name:'Hel Grotesk Gothic SHA', stack:'"Hel Grotesk Gothic SHA","Franklin Gothic Medium",sans-serif'},
+  {name:'Komicnicks Caps',  stack:'"Komicnicks Caps","Impact",sans-serif'},
+  {name:'Hormuz',           stack:'"Hormuz","Georgia",serif'},
+  {name:'Greengoth SHA',    stack:'"Greengoth SHA","Copperplate Gothic","Papyrus",fantasy'},
+  {name:'DS Kork SHA',      stack:'"DS Kork SHA","Courier New",monospace'},
+  {name:'Graphik LC Web',   stack:'"Graphik LC Web","Trebuchet MS",sans-serif'},
+  {name:'BlacktearScriptC', stack:'"BlacktearScriptC","Brush Script MT",cursive'},
+];
+let curFontStack=fontDefs[0].stack;
+
+/* ════════════════════════════════════
+   MODALS
+════════════════════════════════════ */
+function mOpen(id){document.getElementById(id).classList.add('open')}
+function mClose(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}));
+
+/* ════════════════════════════════════
+   SPEED
+════════════════════════════════════ */
+function onSpdChange(v){
+  spV.textContent=v+'%';
+  document.getElementById('iSpd').textContent=v+'%';
+}
+
+/* ════════════════════════════════════
+   HISTORY
+════════════════════════════════════ */
+function onTxtIn(){document.getElementById('iCh').textContent=document.getElementById('uTxt').value.length}
+function onTxtKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();runAnim()}}
+
+function saveHist(t){
+  if(!t.trim())return;
+  hist=[t,...hist.filter(h=>h!==t)].slice(0,8);renderHist();
+}
+function renderHist(){
+  const c=document.getElementById('hist');c.innerHTML='';
+  hist.forEach(h=>{
+    const b=document.createElement('button');b.className='hpill';
+    b.textContent=h.length>15?h.slice(0,13)+'…':h;b.title=h;
+    b.onclick=()=>{document.getElementById('uTxt').value=h;onTxtIn();runAnim()};
+    c.appendChild(b);
+  });
+}
+
+/* ════════════════════════════════════
+   SKETCH IN TEXT AREA
+════════════════════════════════════ */
+function toggleSketch(on){
+  sketchMode=on;
+  const ta=document.getElementById('uTxt');
+  const c=document.getElementById('sketchC');
+  const info=document.getElementById('sketchInfo');
+  const clrBtn=document.getElementById('clearSkBtn');
+  const sendBtn=document.getElementById('sendSkBtn');
+
+  if(on){
+    // Resize canvas to match textarea
+    const wrap=document.getElementById('tdWrap');
+    c.width=wrap.clientWidth;
+    c.height=Math.max(80,ta.scrollHeight);
+    c.style.pointerEvents='all';
+    c.style.cursor='crosshair';
+    c.style.opacity='1';
+    c.style.position='absolute';
+    c.style.top='0';c.style.left='0';
+    c.style.width='100%';c.style.height='100%';
+    ta.style.opacity='0.15';
+    sketchCtx=c.getContext('2d');
+    sketchCtx.strokeStyle=curColor;
+    sketchCtx.lineWidth=parseInt(document.getElementById('thickness').value);
+    sketchCtx.lineCap='round';sketchCtx.lineJoin='round';
+    info.style.display='inline';clrBtn.style.display='inline';sendBtn.style.display='inline';
+    initSketchEvents(c);
+  } else {
+    c.style.pointerEvents='none';c.style.opacity='0.5';
+    ta.style.opacity='1';
+    info.style.display='none';clrBtn.style.display='none';sendBtn.style.display='none';
+    removeSketchEvents(c);
+  }
+}
+
+function initSketchEvents(c){
+  function pos(e){const r=c.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
+  c._sd=e=>{
+    e.preventDefault();sketchDrawing=true;
+    sketchCtx.strokeStyle=curColor;
+    sketchCtx.lineWidth=parseInt(document.getElementById('thickness').value);
+    const p=pos(e);sketchCtx.beginPath();sketchCtx.moveTo(p.x,p.y);
+  };
+  c._mv=e=>{
+    e.preventDefault();if(!sketchDrawing)return;
+    const p=pos(e);sketchCtx.lineTo(p.x,p.y);sketchCtx.stroke();
+  };
+  c._su=()=>{sketchDrawing=false;sketchCtx.beginPath()};
+  c.addEventListener('mousedown',c._sd);
+  c.addEventListener('mousemove',c._mv);
+  c.addEventListener('mouseup',c._su);
+  c.addEventListener('mouseleave',c._su);
+  c.addEventListener('contextmenu',e=>{e.preventDefault();c._sd(e)});
+}
+function removeSketchEvents(c){
+  if(c._sd)c.removeEventListener('mousedown',c._sd);
+  if(c._mv)c.removeEventListener('mousemove',c._mv);
+  if(c._su){c.removeEventListener('mouseup',c._su);c.removeEventListener('mouseleave',c._su)}
+}
+
+function clearSketch(){
+  const c=document.getElementById('sketchC');
+  if(sketchCtx)sketchCtx.clearRect(0,0,c.width,c.height);
+}
+
+function sendSketchToStage(){
+  const c=document.getElementById('sketchC');
+  const stage=document.getElementById('stage');
+  stage.innerHTML='';
+  const img=document.createElement('img');
+  img.src=c.toDataURL('image/png');
+  img.style.cssText='max-width:100%;max-height:300px;object-fit:contain;opacity:0;transition:opacity 0.6s';
+  stage.appendChild(img);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{img.style.opacity='1'}));
+  // uncheck draw mode
+  document.getElementById('drawToggle').checked=false;
+  toggleSketch(false);
+}
+
+/* ════════════════════════════════════
+   ANIM SELECT
+════════════════════════════════════ */
+function selAnim(name,el){
+  curAnim=name;
+  document.querySelectorAll('.ac').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('animLbl').textContent=animLabels[name];
+  document.getElementById('iAnim').textContent=name;
+  mClose('mAnim');runAnim();
+}
+
+/* ════════════════════════════════════
+   COLOR WHEEL
+════════════════════════════════════ */
+(function(){
+  const c=document.getElementById('colorWheel'),ctx=c.getContext('2d'),cx=75,cy=75,r=72;
+  for(let a=0;a<360;a++){
+    ctx.beginPath();ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,a*Math.PI/180,(a+2)*Math.PI/180);
+    ctx.closePath();ctx.fillStyle=`hsl(${a},100%,50%)`;ctx.fill();
+  }
+  const g1=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
+  g1.addColorStop(0,'rgba(255,255,255,1)');g1.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=g1;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+  const g2=ctx.createRadialGradient(cx,cy,r*0.55,cx,cy,r);
+  g2.addColorStop(0,'rgba(0,0,0,0)');g2.addColorStop(1,'rgba(0,0,0,0.65)');
+  ctx.fillStyle=g2;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+  function pick(e){
+    const rect=c.getBoundingClientRect();
+    const x=Math.round((e.clientX-rect.left)*(150/rect.width));
+    const y=Math.round((e.clientY-rect.top)*(150/rect.height));
+    const d=ctx.getImageData(Math.max(0,Math.min(149,x)),Math.max(0,Math.min(149,y)),1,1).data;
+    setCol('#'+[d[0],d[1],d[2]].map(v=>v.toString(16).padStart(2,'0')).join(''));
+  }
+  c.addEventListener('mousedown',pick);
+  c.addEventListener('mousemove',e=>{if(e.buttons)pick(e)});
+})();
+
+function setCol(hex){
+  curColor=hex;
+  document.getElementById('cPrev').style.background=hex;
+  document.getElementById('cHex').textContent=hex;
+  applyS();
+}
+function onBright(v){
+  document.getElementById('brightV').textContent=v+'%';
+  document.getElementById('stage').style.filter=`brightness(${v/100})`;
+}
+
+/* ════════════════════════════════════
+   FONT MODAL
+════════════════════════════════════ */
+(function(){
+  const fl=document.getElementById('fontList');
+  const lbl=document.createElement('div');lbl.className='flbl';lbl.textContent='Dostupné fonty';fl.appendChild(lbl);
+  fontDefs.forEach((fd,idx)=>{
+    const d=document.createElement('div');d.className='fi'+(idx===0?' on':'');
+    d.textContent=fd.name;d.style.fontFamily=fd.stack;
+    d.onclick=()=>selFont(fd,d);fl.appendChild(d);
+  });
+})();
+
+function selFont(fd,el){
+  curFont=fd.name;curFontStack=fd.stack;
+  document.getElementById('fontLbl').textContent=fd.name;
+  document.getElementById('fontLbl').style.fontFamily=fd.stack;
+  document.getElementById('iFnt').textContent=fd.name;
+  document.querySelectorAll('.fi').forEach(i=>i.classList.remove('on'));
+  el.classList.add('on');mClose('mFont');applyS();
+}
+
+/* ════════════════════════════════════
+   APPLY STYLES
+════════════════════════════════════ */
+function applyS(){
+  const st=document.getElementById('stage');
+  const sz=document.getElementById('fSz').value;
+  const ls=(document.getElementById('lSp').value/100).toFixed(2);
+  const th=document.getElementById('thickness').value;
+  st.style.fontSize=sz+'px';
+  st.style.fontFamily=curFontStack;
+  st.style.letterSpacing=ls+'em';
+  // thickness = stroke simulation via text-stroke / paint-order
+  st.style.webkitTextStroke=`${th}px ${curColor}`;
+  st.querySelectorAll('.ch').forEach(c=>{
+    c.style.color=curColor;
+    c.style.webkitTextStroke=`${th}px ${curColor}`;
+  });
+}
+
+/* ════════════════════════════════════
+   BACKGROUND
+════════════════════════════════════ */
+function loadBG(e){
+  const f=e.target.files[0];if(!f)return;
+  const img=document.getElementById('bgImg');
+  img.src=URL.createObjectURL(f);img.classList.add('vis');
+}
+function clearBG(){
+  const img=document.getElementById('bgImg');img.src='';img.classList.remove('vis');
+  document.getElementById('bgInp').value='';
+}
+
+/* ════════════════════════════════════
+   ANIMATION ENGINE
+════════════════════════════════════ */
+function runAnim(){
+  const txt=document.getElementById('uTxt').value||'TEXT';
+  saveHist(txt);
+  const st=document.getElementById('stage');
+  const sp=getSpeedDur();
+  st.innerHTML='';st.style.perspective='';st.style.filter='';
+  document.getElementById('iCh').textContent=txt.length;
+  const r={matrix:rMatrix,lightning:rLightning,neon:rNeon,wave:rWave,bounce:rBounce,
+    typewriter:rTypewriter,fadeblur:rFadeBlur,sizerand:rSizeRand,
+    mirror:rMirror,explode:rExplode,garland:rGarland,td3:rTd3};
+  (r[curAnim]||rMatrix)(txt,st,sp);
+  setTimeout(applyS,60);
+}
+
+function mkS(txt){
+  const th=document.getElementById('thickness').value;
+  return[...txt].map(ch=>{
+    const s=document.createElement('span');s.className='ch';
+    s.textContent=ch===' '?'\u00A0':ch;
+    s.style.cssText=`display:inline-block;color:${curColor};-webkit-text-stroke:${th}px ${curColor}`;
+    return s;
+  });
+}
+
+function rMatrix(t,st,sp){
+  const chars='01';const spans=mkS(t);const fin=[...t];
+  spans.forEach((s,i)=>{
+    s.style.animation=`matfall ${sp*0.7}s ease both`;
+    s.style.animationDelay=(i*0.06)+'s';
+    let it=0;
+    const iv=setInterval(()=>{
+      if(it<10){s.textContent=chars[Math.floor(Math.random()*chars.length)];it++}
+      else{s.textContent=fin[i]===' '?'\u00A0':fin[i];s.style.color=curColor;clearInterval(iv)}
+    },i*55+70);
+    st.appendChild(s);
+  });
+}
+
+function rLightning(t,st,sp){
+  const d=document.createElement('div');d.textContent=t;d.style.color=curColor;
+  d.style.animation=`lgtn ${sp}s ease both`;st.appendChild(d);
+}
+
+function rNeon(t,st,sp){
+  const d=document.createElement('span');d.textContent=t;d.style.color=curColor;
+  d.style.animation=`neonp ${sp*0.6}s ease-in-out infinite`;st.appendChild(d);
+}
+
+function rWave(t,st,sp){
+  mkS(t).forEach((s,i,a)=>{
+    s.style.animation=`wavech ${sp*0.6}s ease-in-out infinite`;
+    s.style.animationDelay=(i/a.length*sp*0.6)+'s';st.appendChild(s);
+  });
+}
+
+function rBounce(t,st,sp){
+  mkS(t).forEach((s,i)=>{
+    s.style.animation=`bounci ${sp*0.6}s cubic-bezier(0.36,0.07,0.19,0.97) both`;
+    s.style.animationDelay=(i*0.08)+'s';st.appendChild(s);
+  });
+}
+
+function rTypewriter(t,st,sp){
+  let i=0;const iv=(sp/t.length)*1000;
+  const cur=document.createElement('span');
+  cur.style.cssText=`display:inline-block;width:3px;background:${curColor};height:1em;vertical-align:middle;animation:twblink 0.7s infinite`;
+  function tp(){
+    if(i<t.length){
+      const s=document.createElement('span');s.className='ch';
+      const th=document.getElementById('thickness').value;
+      s.textContent=t[i]===' '?'\u00A0':t[i];
+      s.style.cssText=`display:inline-block;color:${curColor};-webkit-text-stroke:${th}px ${curColor}`;
+      st.appendChild(s);i++;setTimeout(tp,iv);
+    }else{st.appendChild(cur);setTimeout(()=>cur.remove(),3000)}
+  }
+  tp();
+}
+
+function rFadeBlur(t,st,sp){
+  mkS(t).forEach((s,i)=>{
+    s.style.animation=`fblur ${sp*0.7}s ease both`;
+    s.style.animationDelay=(i*0.05)+'s';st.appendChild(s);
+  });
+}
+
+function rSizeRand(t,st,sp){
+  mkS(t).forEach((s,i)=>{
+    const rs=(0.4+Math.random()*1.8).toFixed(2),rr=((Math.random()-0.5)*45).toFixed(1)+'deg';
+    s.style.setProperty('--rs',rs);s.style.setProperty('--rr',rr);
+    s.style.fontSize=(Math.random()*1.4+0.4)+'em';
+    s.style.animation=`szr ${sp*0.6}s cubic-bezier(0.22,1,0.36,1) both`;
+    s.style.animationDelay=(i*0.06)+'s';st.appendChild(s);
+  });
+}
+
+function rMirror(t,st,sp){
+  const d=document.createElement('div');d.textContent=t;d.style.color=curColor;
+  d.style.animation=`mirr ${sp*0.9}s cubic-bezier(0.22,1,0.36,1) both`;st.appendChild(d);
+}
+
+function rExplode(t,st,sp){
+  const spans=mkS(t);spans.forEach(s=>{s.style.opacity='0';st.appendChild(s)});
+  spans.forEach((s,i)=>{
+    const ex=((Math.random()-0.5)*500)+'px',ey=((Math.random()-0.5)*350)+'px',er=((Math.random()-0.5)*400)+'deg';
+    s.style.setProperty('--ex',ex);s.style.setProperty('--ey',ey);s.style.setProperty('--er',er);
+    setTimeout(()=>s.style.opacity='1',i*45);
+  });
+  const at=(sp*0.5+spans.length*0.045)*1000;
+  setTimeout(()=>{
+    spans.forEach((s,i)=>{s.style.animation=`exout ${sp*0.4}s ease forwards`;s.style.animationDelay=(i*0.03)+'s'});
+    setTimeout(()=>{
+      spans.forEach((s,i)=>{s.style.animation=`exin ${sp*0.55}s cubic-bezier(0.22,1,0.36,1) forwards`;s.style.animationDelay=(i*0.04)+'s'});
+    },sp*400+spans.length*30+200);
+  },at);
+}
+
+function rGarland(t,st,sp){
+  mkS(t).forEach((s,i)=>{
+    const gc=garCols[i%garCols.length];
+    s.style.setProperty('--gc',gc);
+    s.style.animation=`garfl ${(sp*0.35+Math.random()*0.3).toFixed(2)}s ease-in-out infinite`;
+    s.style.animationDelay=(i*0.12)+'s';
+    setTimeout(()=>{s.style.color=gc;s.style.animation='none';s.style.textShadow=`0 0 12px ${gc},0 0 35px ${gc}`},sp*2500);
+    st.appendChild(s);
+  });
+}
+
+function rTd3(t,st,sp){
+  st.style.perspective='800px';
+  mkS(t).forEach((s,i)=>{
+    s.style.animation=`td3a ${sp*0.7}s cubic-bezier(0.22,1,0.36,1) both`;
+    s.style.animationDelay=(i*0.07)+'s';st.appendChild(s);
+  });
+}
+
+/* ════════════════════════════════════
+   EXPORT PNG
+════════════════════════════════════ */
+function expPNG(){
+  const w=1000,h=500,c=document.createElement('canvas');c.width=w;c.height=h;
+  const ctx=c.getContext('2d');
+  const bg=document.getElementById('bgImg');
+  if(bg.classList.contains('vis')&&bg.src){ctx.drawImage(bg,0,0,w,h)}
+  else{ctx.fillStyle='#0a0a0a';ctx.fillRect(0,0,w,h)}
+  const sz=document.getElementById('fSz').value;
+  const th=document.getElementById('thickness').value;
+  ctx.fillStyle=curColor;ctx.strokeStyle=curColor;ctx.lineWidth=parseInt(th);
+  ctx.font=`${sz}px ${curFontStack}`;ctx.textAlign='center';ctx.textBaseline='middle';
+  if(parseInt(th)>1){ctx.strokeText(document.getElementById('uTxt').value||'TEXT',w/2,h/2)}
+  ctx.fillText(document.getElementById('uTxt').value||'TEXT',w/2,h/2);
+  const a=document.createElement('a');a.download='textmorph.png';a.href=c.toDataURL('image/png');a.click();
+}
+
+/* ════════════════════════════════════
+   EXPORT GIF
+   Uses gif.js — captures canvas frames with full animation rendered on canvas
+════════════════════════════════════ */
+function expGIF(){
+  const btn=document.getElementById('gifBtn');
+  btn.textContent='⏳ GIF...';btn.disabled=true;
+  function load(){
+    if(!window.GIF){
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js';
+      s.onload=()=>doGIF(btn);s.onerror=()=>{btn.textContent='⬇ GIF';btn.disabled=false;alert('Chyba: gif.js sa nenačítal')};
+      document.head.appendChild(s);
+    } else doGIF(btn);
+  }
+  load();
+}
+
+function doGIF(btn){
+  const txt=document.getElementById('uTxt').value||'TEXT';
+  const sp=getSpeedDur();
+  const sz=parseInt(document.getElementById('fSz').value);
+  const th=parseInt(document.getElementById('thickness').value);
+  const w=600,h=300,frames=50;
+  // frame delay in ms — full animation over sp seconds
+  const delay=Math.max(20,Math.round(sp*1000/frames));
+
+  const gif=new GIF({
+    workers:2,quality:6,width:w,height:h,
+    workerScript:'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js',
+    background:'#0a0a0a'
+  });
+
+  const c=document.createElement('canvas');c.width=w;c.height=h;
+  const ctx=c.getContext('2d');
+  const bg=document.getElementById('bgImg');
+  const ls=parseFloat((document.getElementById('lSp').value/100).toFixed(2));
+
+  for(let f=0;f<frames;f++){
+    const t=f/(frames-1); // 0 → 1
+    ctx.clearRect(0,0,w,h);
+    // background
+    if(bg.classList.contains('vis')&&bg.src){try{ctx.drawImage(bg,0,0,w,h)}catch(e){ctx.fillStyle='#0a0a0a';ctx.fillRect(0,0,w,h)}}
+    else{ctx.fillStyle='#0a0a0a';ctx.fillRect(0,0,w,h)}
+
+    ctx.save();
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    // approximate letterSpacing
+    ctx.font=`${sz}px ${curFontStack}`;
+    ctx.fillStyle=curColor;ctx.strokeStyle=curColor;ctx.lineWidth=th;
+    gifFrame(ctx,curAnim,txt,t,w,h,sz,th,ls);
+    ctx.restore();
+    gif.addFrame(ctx,{copy:true,delay});
+  }
+
+  gif.on('finished',blob=>{
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.download='textmorph-anim.gif';a.href=url;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    btn.textContent='⬇ GIF';btn.disabled=false;
+  });
+  gif.on('error',err=>{console.error(err);btn.textContent='⬇ GIF';btn.disabled=false;});
+  gif.render();
+}
+
+function drawTextWithLS(ctx,txt,x,y,ls,sz,fill,stroke,th){
+  // Manual letter spacing
+  const chars=[...txt];
+  const charW=sz*0.6+ls*sz;
+  const totalW=chars.length*charW;
+  let cx=x-totalW/2+charW/2;
+  chars.forEach(ch=>{
+    if(th>1){ctx.strokeText(ch,cx,y)}
+    if(fill)ctx.fillText(ch,cx,y);
+    cx+=charW;
+  });
+}
+
+function gifFrame(ctx,anim,txt,t,w,h,sz,th,ls){
+  const cw=sz*0.6+ls*sz;
+  const totalW=[...txt].length*cw;
+  function drawCh(ch,cx,cy){
+    if(th>1)ctx.strokeText(ch,cx,cy);
+    ctx.fillText(ch,cx,cy);
+  }
+  function xOf(i,total){return w/2-(total/2-i-0.5)*cw}
+
+  ctx.fillStyle=curColor;ctx.strokeStyle=curColor;
+
+  switch(anim){
+    case 'fadeblur':
+      ctx.globalAlpha=Math.min(1,t*2);
+      ctx.filter=`blur(${Math.max(0,(1-t)*14)}px)`;
+      drawTextWithLS(ctx,txt,w/2,h/2,ls,sz,true,th>1,th);
+      ctx.filter='none';break;
+
+    case 'wave':
+      [...txt].forEach((ch,i)=>{
+        const yo=Math.sin((i/txt.length+t)*Math.PI*2)*22;
+        drawCh(ch,xOf(i,txt.length),h/2+yo);
+      });break;
+
+    case 'neon':
+      const pulse=0.5+0.5*Math.sin(t*Math.PI*8);
+      ctx.shadowColor=curColor;ctx.shadowBlur=15+pulse*45;
+      ctx.globalAlpha=0.75+pulse*0.25;
+      drawTextWithLS(ctx,txt,w/2,h/2,ls,sz,true,false,0);
+      ctx.shadowBlur=0;break;
+
+    case 'garland':
+      [...txt].forEach((ch,i)=>{
+        ctx.fillStyle=`hsl(${(i*37+t*360)%360},100%,60%)`;
+        ctx.strokeStyle=ctx.fillStyle;ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=14;
+        drawCh(ch,xOf(i,txt.length),h/2);
+      });ctx.shadowBlur=0;break;
+
+    case 'mirror':
+      ctx.save();
+      if(t<0.5){ctx.translate(w,0);ctx.scale(-1,1)}
+      ctx.globalAlpha=Math.min(1,t*3);
+      drawTextWithLS(ctx,txt,t<0.5?0:w/2,h/2,ls,sz,true,th>1,th);
+      ctx.restore();break;
+
+    case 'bounce':
+      [...txt].forEach((ch,i)=>{
+        const ph=Math.max(0,t-(i/txt.length)*0.4)*2.5;
+        const yo=ph<1?-Math.sin(ph*Math.PI)*28:0;
+        ctx.globalAlpha=Math.min(1,t*4);
+        drawCh(ch,xOf(i,txt.length),h/2+yo);
+      });break;
+
+    case 'matrix':
+      const chars='01';
+      [...txt].forEach((ch,i)=>{
+        const revealed=t>(i/txt.length)*0.7;
+        ctx.fillStyle=revealed?curColor:'#00ff41';ctx.strokeStyle=ctx.fillStyle;
+        drawCh(revealed?ch:(Math.random()<0.5?'0':'1'),xOf(i,txt.length),h/2);
+      });break;
+
+    case 'lightning':
+      const lp=t<0.2?t*5:t<0.38?1-(t-0.2)*5.5:t<0.55?t*1.8:1;
+      ctx.globalAlpha=Math.max(0,Math.min(1,lp));
+      ctx.shadowColor=curColor;ctx.shadowBlur=t<0.38?60:0;
+      drawTextWithLS(ctx,txt,w/2,h/2,ls,sz,true,th>1,th);
+      ctx.shadowBlur=0;break;
+
+    case 'td3':{
+      const rx=(1-Math.min(1,t*1.5))*80*Math.PI/180;
+      ctx.globalAlpha=Math.min(1,t*2.2);
+      ctx.save();ctx.translate(w/2,h/2);
+      ctx.transform(1,0,0,Math.cos(rx),0,0);
+      drawTextWithLS(ctx,txt,0,0,ls,sz,true,th>1,th);
+      ctx.restore();break;}
+
+    case 'sizerand':
+      [...txt].forEach((ch,i)=>{
+        const sc=1+Math.sin((i*1.3+t*5))*0.3;
+        ctx.save();ctx.translate(xOf(i,txt.length),h/2);ctx.scale(sc,sc);
+        drawCh(ch,0,0);ctx.restore();
+      });break;
+
+    case 'explode':
+      if(t<0.4){
+        ctx.globalAlpha=t/0.4;
+        drawTextWithLS(ctx,txt,w/2,h/2,ls,sz,true,th>1,th);
+      } else if(t<0.6){
+        const et=(t-0.4)/0.2;
+        [...txt].forEach((ch,i)=>{
+          const ex=Math.sin(i*1.7)*200*et,ey=Math.cos(i*2.1)*150*et;
+          ctx.globalAlpha=1-et;ctx.save();ctx.translate(xOf(i,txt.length)+ex,h/2+ey);
+          ctx.rotate(et*i*0.5);drawCh(ch,0,0);ctx.restore();
+        });
+      } else {
+        const it=(t-0.6)/0.4;
+        [...txt].forEach((ch,i)=>{
+          const ex=Math.sin(i*1.7)*200*(1-it),ey=Math.cos(i*2.1)*150*(1-it);
+          ctx.globalAlpha=it;ctx.save();ctx.translate(xOf(i,txt.length)+ex,h/2+ey);
+          ctx.rotate((1-it)*i*0.5);drawCh(ch,0,0);ctx.restore();
+        });
+      }break;
+
+    case 'fadeblur':
+    default:
+      ctx.globalAlpha=Math.min(1,t*3);
+      drawTextWithLS(ctx,txt,w/2,h/2,ls,sz,true,th>1,th);
+  }
+}
+
+/* ════════════════════════════════════
+   INIT
+════════════════════════════════════ */
+window.addEventListener('load',()=>{
+  runAnim();
+  // Init sketch canvas size
+  const wrap=document.getElementById('tdWrap');
+  const sc=document.getElementById('sketchC');
+  sc.width=wrap.clientWidth||260;sc.height=80;
+});
+</script>
+</body>
+</html>
